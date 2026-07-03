@@ -15,17 +15,21 @@
 
 
 int main(int argc, char* argv[]) {
+	const uint32_t sizes[] = {1,2,4,5,10};
 	uint32_t requestedScale;
+	size_t sizeIdx = 5;
 	if(argc == 1){
 		requestedScale = 10;
 	} else {
 		try {
-			requestedScale = static_cast<uint32_t>(atoi(argv[1]));
-			if(requestedScale > 10){
+			sizeIdx = static_cast<size_t>(atoi(argv[1]));
+			if(sizeIdx > 5){
 				requestedScale = 10;
-			}
-			if(requestedScale < 1){
+			} else if(sizeIdx < 1){
+				sizeIdx = 1;
 				requestedScale = 1;
+			} else {
+				requestedScale = sizes[sizeIdx-1];
 			}
 		} catch (std::exception e){
 			[[maybe_unused]] auto ex = e;
@@ -51,7 +55,7 @@ int main(int argc, char* argv[]) {
 
 	sf::Font font("LeroyLettering.ttf");
 	sf::Text text(font);
-	text.setString(std::format("It Lives! (scale:{} x <- (0, {}) y <- (0,{}))", requestedScale, gs.rightMost(), gs.bottomMost()));
+	text.setString(std::format("It Lives! scale:{} ({}X{})", sizeIdx, gs.rightMost(), gs.bottomMost()));
 	text.setCharacterSize(24);
 	text.setFillColor(sf::Color::Green);
 	text.setStyle(sf::Text::Bold | sf::Text::Underlined);
