@@ -1,0 +1,25 @@
+
+{
+    "version": 3,
+    "cmakeMinimumRequired": {"major": 3, "minor": 28, "patch": 0},
+    "configurePresets": [
+        {
+            "name": "default",
+            "displayName": "FirstDefault",
+            "description": "Clang++ and Ninja",
+            "binaryDir": "${sourceDir}/build",
+            "generator": "Ninja",
+            "cacheVariables": {
+                "CMAKE_CXX_COMPILER": "Clang++",
+                "CMAKE_BUILD_TYPE":"Debug",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": true
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "default",
+            "configurePreset": "default"
+        }
+    ]   
+}
