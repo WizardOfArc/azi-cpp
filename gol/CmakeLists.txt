@@ -1,0 +1,51 @@
+cmake_minimum_required(VERSION 3.5...4.3)
+project(AziGOL VERSION 1.0.0 LANGUAGES CXX)
+
+# Ensure the standard is required, not optional
+set(CXX_STANDARD 23)
+set(CXX_STANDARD_REQUIRED ON)
+set(CXX_EXTENSIONS OFF)
+
+# --- add CPM ----
+IF (NOT EXISTS "${CMAKE_CURRENT_LIST_DIR}/cmake/CPM.cmake")
+  file(
+    DOWNLOAD
+    https://github.com/cpm-cmake/CPM.cmake/releases/download/v0.42.3/CPM.cmake
+    ${CMAKE_CURRENT_BINARY_DIR}/cmake/CPM.cmake
+    EXPECTED_HASH SHA256=:a609e875fd532b067174250f6abbc3dac22fe2d64869783fb1e80bda1625c844
+    STATUS status
+    SHOW_PROGRESS
+  )    
+  list(GET status 0 status_code)
+  if(NOT status_code EQUAL 0)
+     message(FATAL_ERROR "Could not download CPM.cmake")
+  endif()
+endif()
+
+include(cmake/CPM.cmake)
+
+CPMAddPackage(
+    NAME SFML
+    GITHUB_REPOSITORY SFML/SFML
+    GIT_TAG 3.0.0
+    VERSION 3.0.0
+    OPTIONS 
+        # Disable unused components to speed up build
+        "SFML_BUILD_AUDIO OFF"      # Enable with ON + link SFML::Audio in CMakeLists.txt
+        "SFML_BUILD_GRAPHICS ON"    # Enable with ON + link SFML::Graphics in CMakeLists.txt
+        "SFML_BUILD_NETWORK OFF"    # Enable with ON + link SFML::Network in CMakeLists.txt
+        "SFML_BUILD_WINDOW ON"      # ON by default; link via $<$<PLATFORM_ID:Windows>:SFML::Main> (Windows only)
+        "SFML_BUILD_DOC OFF"
+        "SFML_BUILD_EXAMPLES OFF"
+)
+add_subdirectory(src bin)
+add_subdirectory(include)
+
+target_link_libraries(azi_game_of_life PRIVATE
+    SFML::Graphics 
+    $<$<PLATFORM_ID:Windows>:SFML::Main>
+)
+
+
+# -------- Copy Resources ---
+file(COPY "res/" DESTINATION "${CMAKE_BINARY_DIR}/bin")
