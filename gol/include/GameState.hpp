@@ -14,6 +14,7 @@ struct CellRenderData {
 class GameState {
     public:
         explicit GameState(uint32_t cols, uint32_t rows,uint32_t scrWidth, uint32_t scrHeight): m_grid{cols, rows, scrWidth, scrHeight} {
+            m_paused = false;
         } 
 
         uint32_t rightMost(){
@@ -22,6 +23,14 @@ class GameState {
 
         uint32_t bottomMost(){
             return m_grid.maxPosY();
+        }
+
+        bool isPaused(){
+            return m_paused;
+        }
+
+        void togglePause(){
+            m_paused = !m_paused;
         }
 
         void updateNursery(){
@@ -295,4 +304,5 @@ class GameState {
         Grid m_grid;
         std::set<Cell> m_live;
         std::set<Cell> m_nursery;   
+        bool m_paused;
 };

@@ -55,9 +55,9 @@ int main(int argc, char* argv[]) {
 
 	sf::Font font("LeroyLettering.ttf");
 	sf::Text text(font);
-	text.setString(std::format("It Lives! scale:{} ({}X{})", sizeIdx, gs.rightMost(), gs.bottomMost()));
-	text.setCharacterSize(24);
+	text.setString(std::format("It Lives! scale:{} ({}X{})", sizeIdx, gridCols, gridRows));
 	text.setFillColor(sf::Color::Green);
+	text.setCharacterSize(24);
 	text.setStyle(sf::Text::Bold | sf::Text::Underlined);
 	text.setPosition({150.f, 0.f});
 
@@ -87,6 +87,13 @@ int main(int argc, char* argv[]) {
 	int mouseY;
 // run the program as long as the window is open
     while (window.isOpen()) {
+	    if(gs.isPaused()){
+			text.setString(std::format("It's Paused [||] <spacebar> to unpause.", sizeIdx, gridCols, gridRows));
+			text.setFillColor(sf::Color::Yellow);
+		} else {
+			text.setString(std::format("It Lives! scale:{} ({}X{})", sizeIdx, gridCols, gridRows));
+			text.setFillColor(sf::Color::Green);
+		}
         // check all the window's events that were triggered since the last iteration of the loop
         while (const std::optional event = window.pollEvent()) {
             // "close requested" event: we close the window
@@ -112,6 +119,9 @@ int main(int argc, char* argv[]) {
 						break;
 					case sf::Keyboard::Scancode::Z:
 					    gs.placeHLozenge(mouseX, mouseY);
+						break;
+					case sf::Keyboard::Scancode::Space:
+					    gs.togglePause();
 						break;
 					default:
 					    break;
@@ -152,7 +162,9 @@ int main(int argc, char* argv[]) {
 		window.draw(sideBorder);
 		window.draw(bottomBorder);
 		// */
-		gs.calculateNextRound();	
+		if( not gs.isPaused()){
+			gs.calculateNextRound();
+		}	
         // end the current frame
         window.display();
     }
