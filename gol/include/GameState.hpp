@@ -1,4 +1,5 @@
 #pragma once
+#include <cstddef>
 #include <cstdint>
 #include <set>
 #include <vector>
@@ -94,96 +95,82 @@ class GameState {
         }
 
     void placeColony(int x, int y){
-        auto left = m_grid.colFromPosX(static_cast<uint32_t>(x));
-        auto top = m_grid.rowFromPosY(static_cast<uint32_t>(y));
-        if(left < 0){
-            left = 0;
-        } 
-        if(top < 0){
-            top = 0;
-        }
-        auto right = left + 1;
-        if(right >= m_grid.getCols()){
-            right = m_grid.getCols() - 1;
-        }
-        auto bottom = top + 1;
-        if(bottom >= m_grid.getRows()){
-            bottom = m_grid.getRows();
-        }
-        std::vector<uint32_t> Xs{left,right};
-        std::vector<uint32_t> Ys{top, bottom};
-        for(auto new_y: Ys){
-            for(auto new_x: Xs){
-                Cell cell{new_x,new_y};
-                m_live.insert(cell);
-                m_grid.birthCell(cell);
-            }
-        }
+        std::vector<std::vector<bool>> layout = {
+            {true,true},
+            {true, true}
+        };
+        placeShape(x, y, layout);
     }
 
-    void placeSpinner(int x, int y){
-        auto centerX = m_grid.colFromPosX(static_cast<uint32_t>(x));
-        auto spinnerY = m_grid.rowFromPosY(static_cast<uint32_t>(y));
-        auto left = centerX - 1;
-        if(left < 0){
-            left = m_grid.getCols() - 1;
-        } 
-        auto right = centerX + 1;
-        if(right == m_grid.getCols()){
-            right = 0;
-        }
-        std::vector<uint32_t> Xs{left, centerX, right};
-        for(auto spinnerX : Xs ){
-            Cell newCell{spinnerX, spinnerY};
-            m_live.insert(newCell);
-            m_grid.birthCell(newCell);
-        }
+    void placeShape(int posX, int posY, std::vector<std::vector<bool>> layout){
+         /*
+             +---- w ----+
+             |           |
+             |    o      |
+             h           h
+             |           |
+             +-----w-----+
+         */
+         auto h = static_cast<int>(layout.size());
+         auto w = static_cast<int>(layout[0].size());
+         auto originX = m_grid.colFromPosX(static_cast<uint32_t>(posX));
+         auto originY = m_grid.rowFromPosY(static_cast<uint32_t>(posY));
+         int colIdxForOrigin = w % 2 == 0 ? (w-1) / 2 : w / 2;
+         int rowIdxForOrigin = h % 2 == 0 ? (h-1) / 2 : h / 2;
+         int originCol = static_cast<int>(originX);
+         int originRow = static_cast<int>(originY);
+         for(int row = 0; row < h; row++){
+            for(int col = 0; col < w; col++){
+                if(not layout[static_cast<size_t>(row)][static_cast<size_t>(col)]) continue;
+                int colOffset = col - colIdxForOrigin;
+                int rowOffest = row - rowIdxForOrigin;
+                uint32_t cellX;
+                if(originCol + colOffset >= 0){
+                    cellX = static_cast<uint32_t>(originCol + colOffset) % m_grid.getCols();
+                } else {
+                    cellX = static_cast<uint32_t>((originCol + colOffset) + static_cast<int>(m_grid.getCols()));
+                }
+                uint32_t cellY;
+                if(originRow + rowOffest >= 0){
+                    cellY = static_cast<uint32_t>(originRow + rowOffest) % m_grid.getRows();
+                } else {
+                    cellY = static_cast<uint32_t>((originRow + rowOffest) + static_cast<int>(m_grid.getRows()));
+                }
+                Cell newCell{cellX, cellY};
+                m_live.insert(newCell);
+                m_grid.birthCell(newCell);
+            }
+         }
+    }
 
+    void placeBigX(int posX, int posY){
+        /*
+             10001
+             01010
+             00100
+             01010
+             10001
+        */
+        std::vector<std::vector<bool>> layout = {
+            {true,false,false,false,true},
+            {false,true,false,true,false},
+            {false,false,true,false,false},
+            {false,true,false,true,false},
+            {true,false,false,false,true}
+        };
+        placeShape(posX, posY, layout);
     }
 
     void placeRing(int posX, int posY){
         /*
-        diagram of  what we want
-          
-            col2Rt -+
-                    |
-          colRt---+ |
-                  v v
-              0 1 1 0      rowUp
-              1 0 0 1  <-- originY
-              1 0 0 1      rowDown
-              0 1 1 0      row2Down
-              ^ ^ 
-              | +--originX
-              |
-              +--- colLt
-            ----------
         */
-        
-        auto originX = m_grid.colFromPosX(static_cast<uint32_t>(posX));
-        auto colLt = originX == 0 ? m_grid.getCols() - 1 : originX - 1;
-        auto colRt = (originX + 1) % m_grid.getCols();
-        auto col2Rt = (originX + 2) % m_grid.getCols();
-
-        auto originY = m_grid.rowFromPosY(static_cast<uint32_t>(posY));
-        auto rowUp = originY == 0 ? m_grid.getRows() - 1 : originY - 1;
-        auto rowDown = (originY + 1) % m_grid.getRows();
-        auto row2Down = (originY + 2) % m_grid.getRows();
-
-        std::vector<Cell> toBirth{
-            Cell{originX, rowUp},
-            Cell{colRt, rowUp},
-            Cell{colLt, originY},
-            Cell{col2Rt, originY},
-            Cell{colLt, rowDown},
-            Cell{col2Rt, rowDown},
-            Cell{originX, row2Down},
-            Cell{colRt, row2Down},
+        std::vector<std::vector<bool>> layout {
+            {false, true, true, false },
+            {true, false, false, true },
+            {true, false, false, true },
+            {false, true, true, false }
         };
-        for(auto newCell: toBirth){
-            m_live.insert(newCell);
-            m_grid.birthCell(newCell);
-        }
+        placeShape(posX, posY, layout);
     }
         
     // TODO: add code for placing gliders in each direction
@@ -191,113 +178,33 @@ class GameState {
     // so TODO: star and lozenges
 
     void placeStar(int posX, int posY){
-        auto originX = m_grid.colFromPosX(static_cast<uint32_t>(posX));
-        auto colLt = originX - 1;
-        if(colLt < 0){
-            colLt = m_grid.getCols() - 1;
-        }
-        auto colRt = (originX + 1) % m_grid.getCols();
-        auto originY = m_grid.rowFromPosY(static_cast<uint32_t>(posY));
-        auto rowUp = originY - 1;
-        if(rowUp < 0){
-            rowUp = m_grid.getRows() - 1;
-        }
-        auto rowDown = (originY + 1) % m_grid.getRows();
-        /*
-            star:
-            0 1 0
-            1 0 1
-            0 1 0
-        */
-        std::vector<Cell> newCells{
-            Cell{colLt, originY},
-            Cell{originX, rowDown},
-            Cell{originX, rowUp},
-            Cell{colRt, originY}
+        std::vector<std::vector<bool>> layout = {
+            {false, true, false},
+            {true, false, true},
+            {false, true, false}
         };
-
-        for(auto newCell: newCells){
-            m_live.insert(newCell);
-            m_grid.birthCell(newCell);
-        }
+        placeShape(posX, posY, layout);
     }
 
 
     void placeHLozenge(int posX, int posY){
-        auto originX = m_grid.colFromPosX(static_cast<uint32_t>(posX));
-        auto colLt = originX - 1;
-        if(colLt < 0){
-            colLt = m_grid.getCols() - 1;
-        }
-        auto colRt = (originX + 1) % m_grid.getCols();
-        auto col2Rt = (originX + 2) % m_grid.getCols();
-
-        auto originY = m_grid.rowFromPosY(static_cast<uint32_t>(posY));
-        auto rowUp = originY - 1;
-        if(rowUp < 0){
-            rowUp = m_grid.getRows() - 1;
-        }
-        auto rowDown = (originY + 1) % m_grid.getRows();
-
-        /*
-            horiz lozenge:
-            0 1 1 0
-            1 0 0 1
-            0 1 1 0
-        */
-        std::vector<Cell> newCells{
-            Cell{colLt, originY},
-            Cell{originX, rowUp},
-            Cell{originX, rowDown},
-            Cell{colRt, rowUp},
-            Cell{colRt, rowDown},
-            Cell{col2Rt, originY},
+        std::vector<std::vector<bool>> layout = {
+            {false, true, true, false},
+            {true, false, false, true},
+            {false, true, true, false}
         };
-
-        for(auto newCell: newCells){
-            m_live.insert(newCell);
-            m_grid.birthCell(newCell);
-        }
+        placeShape(posX, posY, layout);
     }
 
 
     void placeVLozenge(int posX, int posY){
-        auto originX = m_grid.colFromPosX(static_cast<uint32_t>(posX));
-        auto colLt = originX - 1;
-        if(colLt < 0){
-            colLt = m_grid.getCols() - 1;
-        }
-        auto colRt = (originX + 1) % m_grid.getCols();
-
-        auto originY = m_grid.rowFromPosY(static_cast<uint32_t>(posY));
-        auto rowUp = originY - 1;
-        if(rowUp < 0){
-            rowUp = m_grid.getRows() - 1;
-        }
-        auto rowDown = (originY + 1) % m_grid.getRows();
-        auto row2Down = (originY + 2) % m_grid.getRows();
-
-
-        /*
-            vert lozenge:
-            0 1 0
-            1 0 1
-            1 0 1
-            0 1 0
-        */
-        std::vector<Cell> newCells{
-            Cell{colLt, originY},
-            Cell{colLt, rowDown},
-            Cell{originX, rowUp},
-            Cell{originX, row2Down},
-            Cell{colRt, originY},
-            Cell{colRt, rowDown}
+        std::vector<std::vector<bool>> layout = {
+            {false, true, false},
+            {true, false, true},
+            {true, false, true},
+            {false, true, false}
         };
-
-        for(auto newCell: newCells){
-            m_live.insert(newCell);
-            m_grid.birthCell(newCell);
-        }
+        placeShape(posX, posY, layout);
     }
 
     private:

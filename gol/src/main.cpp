@@ -105,23 +105,26 @@ int main(int argc, char* argv[]) {
 					case sf::Keyboard::Scancode::Escape:
 						window.close();
 						break;
+					case sf::Keyboard::Scancode::Space:
+					    gs.togglePause();
+						break;
+					case sf::Keyboard::Scancode::A:
+					    gs.placeVLozenge(mouseX, mouseY);
+						break;
 					case sf::Keyboard::Scancode::C:
 					    gs.placeColony(mouseX, mouseY);
 						break;
 					case sf::Keyboard::Scancode::R:
 					    gs.placeRing(mouseX, mouseY);
 						break;
-					case sf::Keyboard::Scancode::A:
-					    gs.placeVLozenge(mouseX, mouseY);
-						break;
 					case sf::Keyboard::Scancode::S:
 					    gs.placeStar(mouseX, mouseY);
 						break;
+					case sf::Keyboard::Scancode::X:
+					    gs.placeBigX(mouseX, mouseY);
+						break;
 					case sf::Keyboard::Scancode::Z:
 					    gs.placeHLozenge(mouseX, mouseY);
-						break;
-					case sf::Keyboard::Scancode::Space:
-					    gs.togglePause();
 						break;
 					default:
 					    break;
