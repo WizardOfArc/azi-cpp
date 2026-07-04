@@ -44,6 +44,14 @@ class GameState {
             }
         }
 
+        uint32_t column(int x){
+            return m_grid.colFromPosX(static_cast<uint32_t>(x));
+        }
+
+        uint32_t row(int y){
+            return m_grid.rowFromPosY(static_cast<uint32_t>(y));
+        }
+
         std::vector<Cell> getLivingCells(){
             std::vector<Cell> livingCells;
             for(auto cell: m_live){

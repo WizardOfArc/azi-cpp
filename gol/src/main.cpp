@@ -135,7 +135,8 @@ int main(int argc, char* argv[]) {
 				mouseX = position.x <= static_cast<int>(gs.rightMost()) ? position.x : static_cast<int>(gs.rightMost());
 				mouseY = position.y <= static_cast<int>(gs.bottomMost()) ? position.y : static_cast<int>(gs.bottomMost());
 				mousePos.setPosition({static_cast<float>(mouseX), static_cast<float>(mouseY)});
-				mousePos.setString(std::format("*({},{})", mouseX, mouseY));
+				
+				mousePos.setString(std::format("*({},{})", gs.column(mouseX), gs.row(mouseY)));
 			}
         }
 
