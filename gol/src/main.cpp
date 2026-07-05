@@ -56,7 +56,8 @@ int main(int argc, char* argv[]) {
 	sf::Font font("LeroyLettering.ttf");
 	sf::Text text(font);
 	text.setString(std::format("It Lives! scale:{} ({}X{})", sizeIdx, gridCols, gridRows));
-	text.setFillColor(sf::Color::Green);
+	sf::Color bannerColor(0, 200, 125);
+	text.setFillColor(bannerColor);
 	text.setCharacterSize(24);
 	text.setStyle(sf::Text::Bold | sf::Text::Underlined);
 	text.setPosition({150.f, 0.f});
@@ -80,14 +81,15 @@ int main(int argc, char* argv[]) {
 
 	sf::Text buttonPressed(font);
 	buttonPressed.setCharacterSize(18);
-	buttonPressed.setFillColor(sf::Color::Red);
+	buttonPressed.setFillColor(sf::Color(255, 189,0));
 	buttonPressed.setStyle(sf::Text::Bold);
 	buttonPressed.setPosition({700.f, 0.f});
 	buttonPressed.setString("*");
 
 	sf::Text mousePos(font);
 	mousePos.setCharacterSize(10);
-	mousePos.setFillColor(sf::Color::Magenta);
+	sf::Color mouseColor = sf::Color(255, 100, 255);
+	mousePos.setFillColor(mouseColor);
 	mousePos.setStyle(sf::Text::Bold);
 	mousePos.setPosition({400.f, 300.f});
 	mousePos.setString("*");
@@ -97,10 +99,10 @@ int main(int argc, char* argv[]) {
     while (window.isOpen()) {
 	    if(gs.isPaused()){
 			text.setString(std::format("It's Paused [||] <spacebar> to unpause.", sizeIdx, gridCols, gridRows));
-			text.setFillColor(sf::Color::Yellow);
+			text.setFillColor(sf::Color(200, 128, 0));
 		} else {
 			text.setString(std::format("It Lives! scale:{} ({}X{})", sizeIdx, gridCols, gridRows));
-			text.setFillColor(sf::Color::Green);
+			text.setFillColor(bannerColor);
 		}
         // check all the window's events that were triggered since the last iteration of the loop
         while (const std::optional event = window.pollEvent()) {
@@ -178,7 +180,9 @@ int main(int argc, char* argv[]) {
 				mouseX = position.x <= static_cast<int>(gs.rightMost()) ? position.x : static_cast<int>(gs.rightMost());
 				mouseY = position.y <= static_cast<int>(gs.bottomMost()) ? position.y : static_cast<int>(gs.bottomMost());
 				mousePos.setPosition({static_cast<float>(mouseX), static_cast<float>(mouseY)});
-				
+			    mouseColor.r = gs.normX2Color(mouseX);	
+			    mouseColor.b = gs.normY2Color(mouseY);	
+				mousePos.setFillColor(mouseColor);
 				mousePos.setString(std::format("*({},{})", gs.column(mouseX), gs.row(mouseY)));
 			}
         }

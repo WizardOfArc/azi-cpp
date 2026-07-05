@@ -270,6 +270,18 @@ class GameState {
         );
     }
 
+    uint8_t normX2Color(int mouseX){
+      auto col = m_grid.colFromPosX(static_cast<uint32_t>(mouseX));
+      auto ratio = static_cast<float>(col) / static_cast<float>(m_grid.getCols());
+      return static_cast<uint8_t>(ratio * 255.f);
+    }	
+
+    uint8_t normY2Color(int mouseY){	
+      auto row = m_grid.rowFromPosY(static_cast<uint32_t>(mouseY));
+      auto ratio = static_cast<float>(row) / static_cast<float>(m_grid.getRows());
+      return static_cast<uint8_t>(ratio * 255.f);
+    }
+
     private:
         Grid m_grid;
         std::set<Cell> m_live;
