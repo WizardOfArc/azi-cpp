@@ -77,6 +77,14 @@ int main(int argc, char* argv[]) {
 	bottomBorder.setPosition({0, static_cast<float>(gs.bottomMost()+1)});
 	bottomBorder.setFillColor(sf::Color::Red);
 
+
+	sf::Text buttonPressed(font);
+	buttonPressed.setCharacterSize(18);
+	buttonPressed.setFillColor(sf::Color::Red);
+	buttonPressed.setStyle(sf::Text::Bold);
+	buttonPressed.setPosition({700.f, 0.f});
+	buttonPressed.setString("*");
+
 	sf::Text mousePos(font);
 	mousePos.setCharacterSize(10);
 	mousePos.setFillColor(sf::Color::Magenta);
@@ -107,24 +115,59 @@ int main(int argc, char* argv[]) {
 						break;
 					case sf::Keyboard::Scancode::Space:
 					    gs.togglePause();
+						buttonPressed.setString("[space]");
+						break;
+					case sf::Keyboard::Scancode::Up:
+					    gs.placeGliderUR(mouseX, mouseY);
+						buttonPressed.setString("[up]");
+						break;
+					case sf::Keyboard::Scancode::Right:
+					    gs.placeGliderDR(mouseX, mouseY);
+						buttonPressed.setString("[right]");
+						break;
+					case sf::Keyboard::Scancode::Down:
+					    gs.placeGliderDL(mouseX, mouseY);
+						buttonPressed.setString("[down]");
+						break;
+					case sf::Keyboard::Scancode::Left:
+					    gs.placeGliderUL(mouseX, mouseY);
+						buttonPressed.setString("[left]");
 						break;
 					case sf::Keyboard::Scancode::A:
 					    gs.placeVLozenge(mouseX, mouseY);
+						buttonPressed.setString("[A]");
 						break;
 					case sf::Keyboard::Scancode::C:
 					    gs.placeColony(mouseX, mouseY);
+						buttonPressed.setString("[C]");
+						break;
+					case sf::Keyboard::Scancode::H:
+					    gs.placeSpinnerH(mouseX, mouseY);
+						buttonPressed.setString("[H]");
+						break;
+					case sf::Keyboard::Scancode::K:
+						buttonPressed.setString("[K]");
+					    gs.clear();
 						break;
 					case sf::Keyboard::Scancode::R:
 					    gs.placeRing(mouseX, mouseY);
+						buttonPressed.setString("[R]");
 						break;
 					case sf::Keyboard::Scancode::S:
 					    gs.placeStar(mouseX, mouseY);
+						buttonPressed.setString("[S]");
+						break;
+					case sf::Keyboard::Scancode::V:
+					    gs.placeSpinnerV(mouseX, mouseY);
+						buttonPressed.setString("[V]");
 						break;
 					case sf::Keyboard::Scancode::X:
 					    gs.placeBigX(mouseX, mouseY);
+						buttonPressed.setString("[X]");
 						break;
 					case sf::Keyboard::Scancode::Z:
 					    gs.placeHLozenge(mouseX, mouseY);
+						buttonPressed.setString("[Z]");
 						break;
 					default:
 					    break;
@@ -163,6 +206,7 @@ int main(int argc, char* argv[]) {
 		}
 
 		window.draw(mousePos);
+		window.draw(buttonPressed);
 		window.draw(sideBorder);
 		window.draw(bottomBorder);
 		// */

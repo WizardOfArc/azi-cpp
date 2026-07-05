@@ -94,6 +94,13 @@ class GameState {
             updateNursery();
         }
 
+        void clear(){
+            for(auto live: m_live){
+                m_grid.killCell(live);
+            }
+            m_live.clear();
+        }
+
         CellRenderData getCellRenderData(const Cell& cell){
             return CellRenderData{
                 .radius=m_grid.getCellRadius(),
@@ -101,14 +108,6 @@ class GameState {
                 .scrnY=static_cast<float>(m_grid.posY(cell.y))
             };
         }
-
-    void placeColony(int x, int y){
-        std::vector<std::vector<bool>> layout = {
-            {true,true},
-            {true, true}
-        };
-        placeShape(x, y, layout);
-    }
 
     void placeShape(int posX, int posY, std::vector<std::vector<bool>> layout){
          /*
@@ -149,70 +148,126 @@ class GameState {
                 m_grid.birthCell(newCell);
             }
          }
+         updateNursery();
     }
 
     void placeBigX(int posX, int posY){
-        /*
-             10001
-             01010
-             00100
-             01010
-             10001
-        */
-        std::vector<std::vector<bool>> layout = {
-            {true,false,false,false,true},
-            {false,true,false,true,false},
-            {false,false,true,false,false},
-            {false,true,false,true,false},
-            {true,false,false,false,true}
-        };
-        placeShape(posX, posY, layout);
+        placeShape(posX, posY, 
+            std::vector<std::vector<bool>> {
+                {true,false,false,false,true},
+                {false,true,false,true,false},
+                {false,false,true,false,false},
+                {false,true,false,true,false},
+                {true,false,false,false,true}
+            }
+        );
     }
 
     void placeRing(int posX, int posY){
-        /*
-        */
-        std::vector<std::vector<bool>> layout {
-            {false, true, true, false },
-            {true, false, false, true },
-            {true, false, false, true },
-            {false, true, true, false }
-        };
-        placeShape(posX, posY, layout);
+        placeShape(posX, posY,
+            std::vector<std::vector<bool>> {
+                {false, true, true, false },
+                {true, false, false, true },
+                {true, false, false, true },
+                {false, true, true, false }
+            });
     }
         
-    // TODO: add code for placing gliders in each direction
-    // it seems that any "dynamic" entity has something like UB when placed this way - will try other stable types to see if they work like colony and ring
-    // so TODO: star and lozenges
-
     void placeStar(int posX, int posY){
-        std::vector<std::vector<bool>> layout = {
-            {false, true, false},
-            {true, false, true},
-            {false, true, false}
-        };
-        placeShape(posX, posY, layout);
+        placeShape(posX, posY, 
+            std::vector<std::vector<bool>> {
+                {false, true, false},
+                {true, false, true},
+                {false, true, false}
+        });
     }
 
 
     void placeHLozenge(int posX, int posY){
-        std::vector<std::vector<bool>> layout = {
-            {false, true, true, false},
-            {true, false, false, true},
-            {false, true, true, false}
-        };
-        placeShape(posX, posY, layout);
+        placeShape(posX, posY, 
+            std::vector<std::vector<bool>> {
+                {false, true, true, false},
+                {true, false, false, true},
+                {false, true, true, false}
+            });
     }
 
 
     void placeVLozenge(int posX, int posY){
-        std::vector<std::vector<bool>> layout = {
-            {false, true, false},
+        placeShape(posX, posY, 
+            std::vector<std::vector<bool>> {
+                {false, true, false},
+                {true, false, true},
+                {true, false, true},
+                {false, true, false}
+        });
+    }
+
+    void placeColony(int x, int y){
+        placeShape(x, y, 
+            std::vector<std::vector<bool>> {
+                {true,true},
+                {true, true}
+            }
+        );
+    }
+
+    void placeSpinnerH(int x, int y){
+         placeShape( x, y,
+            std::vector<std::vector<bool>>{
+                {true, true, true}
+            }
+         );
+    }
+
+    void placeSpinnerV(int x, int y){
+         placeShape( x, y,
+            std::vector<std::vector<bool>>{
+                {true},
+                {true},
+                {true}
+            }
+         );
+    }
+
+    void placeGliderDR(int x, int y){
+        placeShape(x,y,
+           std::vector<std::vector<bool>>{
+            {false, false, true},
             {true, false, true},
+            {false, true, true}
+           }
+        );
+    }
+
+    void placeGliderUR(int x, int y){
+        placeShape(x,y,
+           std::vector<std::vector<bool>>{
+            {false, true, true},
             {true, false, true},
-            {false, true, false}
-        };
-        placeShape(posX, posY, layout);
+            {false, false, true}
+           }
+        );
+    }
+
+    void placeGliderUL(int x, int y){
+        placeShape(x,y,
+            std::vector<std::vector<bool>>{
+              {true, true, false},
+              {true, false, true},
+              {true, false, false}
+            }
+        );
+    }
+
+    void placeGliderDL(int x, int y){
+        placeShape(x,y,
+            std::vector<std::vector<bool>>{
+              {true, false, false},
+              {true, false, true},
+              {true, true, false}
+            }
+        );
     }
 
     private:
