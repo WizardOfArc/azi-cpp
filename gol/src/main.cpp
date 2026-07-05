@@ -14,38 +14,16 @@
 #include "GameState.hpp"
 
 
-int main(int argc, char* argv[]) {
-	const uint32_t sizes[] = {1,2,4,5,10};
-	uint32_t requestedScale;
-	size_t sizeIdx = 5;
-	if(argc == 1){
-		requestedScale = 10;
-	} else {
-		try {
-			sizeIdx = static_cast<size_t>(atoi(argv[1]));
-			if(sizeIdx > 5){
-				requestedScale = 10;
-			} else if(sizeIdx < 1){
-				sizeIdx = 1;
-				requestedScale = 1;
-			} else {
-				requestedScale = sizes[sizeIdx-1];
-			}
-		} catch (std::exception e){
-			[[maybe_unused]] auto ex = e;
-			requestedScale = 10;
-		}
-	}
+int main() {
+	size_t sizeIdx = 3;
 
     // create the window and set up
     const sf::String title = "Azi's Game of Life";
 	const uint32_t screenWidth = 800;
 	const uint32_t screenHeight = 600;
-	const uint32_t gridCols = 40*requestedScale;
-	const uint32_t gridRows = 30*requestedScale;
     sf::RenderWindow window(sf::VideoMode({screenWidth, screenHeight}), title);
 
-	GameState gs{gridCols, gridRows, screenWidth, screenHeight};
+	GameState gs{screenWidth, screenHeight, sizeIdx};
     window.setFramerateLimit(60);
 
     sf::Image icon;
@@ -55,7 +33,7 @@ int main(int argc, char* argv[]) {
 
 	sf::Font font("LeroyLettering.ttf");
 	sf::Text text(font);
-	text.setString(std::format("It Lives! scale:{} ({}X{})", sizeIdx, gridCols, gridRows));
+	text.setString(std::format("It Lives! scale:{} ({}X{})", sizeIdx, gs.getCols(), gs.getRows()));
 	sf::Color bannerColor(0, 200, 125);
 	text.setFillColor(bannerColor);
 	text.setCharacterSize(24);
@@ -98,10 +76,10 @@ int main(int argc, char* argv[]) {
 // run the program as long as the window is open
     while (window.isOpen()) {
 	    if(gs.isPaused()){
-			text.setString(std::format("It's Paused [||] <spacebar> to unpause.", sizeIdx, gridCols, gridRows));
+			text.setString(std::format("It's Paused [||] <spacebar> to unpause.", gs.getScale(), gs.getCols(), gs.getRows()));
 			text.setFillColor(sf::Color(200, 128, 0));
 		} else {
-			text.setString(std::format("It Lives! scale:{} ({}X{})", sizeIdx, gridCols, gridRows));
+			text.setString(std::format("It Lives! scale:{} ({}X{})", gs.getScale(), gs.getCols(), gs.getRows()));
 			text.setFillColor(bannerColor);
 		}
         // check all the window's events that were triggered since the last iteration of the loop
@@ -134,6 +112,26 @@ int main(int argc, char* argv[]) {
 					case sf::Keyboard::Scancode::Left:
 					    gs.placeGliderUL(mouseX, mouseY);
 						buttonPressed.setString("[left]");
+						break;
+					case sf::Keyboard::Scancode::Num1:
+						gs.updateGridScale(1);
+						buttonPressed.setString("[1]");
+						break;
+					case sf::Keyboard::Scancode::Num2:
+						gs.updateGridScale(2);
+						buttonPressed.setString("[2]");
+						break;
+					case sf::Keyboard::Scancode::Num3:
+						gs.updateGridScale(3);
+						buttonPressed.setString("[3]");
+						break;
+					case sf::Keyboard::Scancode::Num4:
+						gs.updateGridScale(4);
+						buttonPressed.setString("[4]");
+						break;
+					case sf::Keyboard::Scancode::Num5:
+						gs.updateGridScale(5);
+						buttonPressed.setString("[5]");
 						break;
 					case sf::Keyboard::Scancode::A:
 					    gs.placeVLozenge(mouseX, mouseY);

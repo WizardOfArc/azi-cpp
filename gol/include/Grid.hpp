@@ -1,4 +1,5 @@
 #pragma once
+#include <cstdint>
 #include <vector>
 
 struct Cell {
@@ -24,6 +25,21 @@ class Grid {
         uint32_t minimum = m_cell_height < m_cell_width ? m_cell_height : m_cell_width;
 		m_cell_radius =  minimum / 2;
 	 }
+
+	 explicit Grid(){
+		Grid(40, 30, 800, 600);
+	 }
+
+	void updateDimensions(uint32_t cols, uint32_t rows){
+         m_cols = cols;
+		 m_rows = rows;
+		 m_matrix = std::vector{rows, std::vector<bool>(cols)};
+		m_cell_width = static_cast<uint32_t>(static_cast<float>(m_screen_w) / static_cast<float>(m_cols));
+		m_cell_height = static_cast<uint32_t>(static_cast<float>(m_screen_h) / static_cast<float>(m_rows));
+        uint32_t minimum = m_cell_height < m_cell_width ? m_cell_height : m_cell_width;
+		m_cell_radius =  minimum / 2;
+
+	}
 
     uint32_t maxPosX(){
         return (m_cols * m_cell_width) - 1;

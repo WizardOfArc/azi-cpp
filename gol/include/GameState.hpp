@@ -14,8 +14,12 @@ struct CellRenderData {
 
 class GameState {
     public:
-        explicit GameState(uint32_t cols, uint32_t rows,uint32_t scrWidth, uint32_t scrHeight): m_grid{cols, rows, scrWidth, scrHeight} {
+        explicit GameState(uint32_t scrWidth, uint32_t scrHeight, size_t scale):  m_scale{scale} {
             m_paused = false;
+            auto requestedScale = m_sizes[m_scale];
+            const uint32_t gridCols = 40*requestedScale;
+            const uint32_t gridRows = 30*requestedScale;
+            m_grid = Grid{gridCols, gridRows, scrWidth, scrHeight};
         } 
 
         uint32_t rightMost(){
@@ -98,6 +102,7 @@ class GameState {
             for(auto live: m_live){
                 m_grid.killCell(live);
             }
+            m_nursery.clear();
             m_live.clear();
         }
 
@@ -270,6 +275,19 @@ class GameState {
         );
     }
 
+    void updateGridScale(int scale){
+        auto potentialScale = static_cast<size_t>(scale);
+        if(potentialScale == m_scale) return;
+        m_scale = static_cast<size_t>(scale);
+        m_paused = true;
+        clear();
+        auto requestedScale = m_sizes[m_scale -1];
+        const uint32_t gridCols = 40*requestedScale;
+        const uint32_t gridRows = 30*requestedScale;
+        m_grid.updateDimensions(gridCols, gridRows);
+        m_paused = false;
+    }
+
     uint8_t normX2Color(int mouseX){
       auto col = m_grid.colFromPosX(static_cast<uint32_t>(mouseX));
       auto ratio = static_cast<float>(col) / static_cast<float>(m_grid.getCols());
@@ -282,9 +300,23 @@ class GameState {
       return static_cast<uint8_t>(ratio * 255.f);
     }
 
+    uint32_t getCols() {
+        return m_grid.getCols();
+    }
+
+    uint32_t getRows() {
+        return m_grid.getRows();
+    }
+    
+    size_t getScale() {
+        return m_scale;
+    }
+
     private:
         Grid m_grid;
         std::set<Cell> m_live;
         std::set<Cell> m_nursery;   
         bool m_paused;
+        size_t m_scale;
+        const std::vector<uint32_t> m_sizes{1,2,4,5,10};
 };
