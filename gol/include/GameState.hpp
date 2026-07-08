@@ -268,6 +268,12 @@ class GameState {
         );
     }
 
+    void placeDot(int x, int y){
+        placeShape(x, y, std::vector<std::vector<bool>>{
+            {true}
+        });
+    }
+
     void placeGliderDL(int x, int y){
         placeShape(x,y,
             std::vector<std::vector<bool>>{

@@ -133,6 +133,10 @@ int main() {
 						gs.updateGridScale(5);
 						buttonPressed.setString("[5]");
 						break;
+					case sf::Keyboard::Scancode::Period:
+						gs.placeDot(mouseX, mouseY);
+						buttonPressed.setString("[.]");
+						break;
 					case sf::Keyboard::Scancode::A:
 					    gs.placeVLozenge(mouseX, mouseY);
 						buttonPressed.setString("[A]");
