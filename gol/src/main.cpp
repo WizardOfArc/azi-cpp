@@ -76,7 +76,7 @@ int main() {
 // run the program as long as the window is open
     while (window.isOpen()) {
 	    if(gs.isPaused()){
-			text.setString(std::format("It's Paused [||] <spacebar> to unpause."));
+			text.setString(std::format("It's Paused [||] <spacebar> or P to unpause."));
 			text.setFillColor(sf::Color(200, 128, 0));
 		} else {
 			text.setString(std::format("It Lives! scale:{} ({}X{})", gs.getScale(), gs.getCols(), gs.getRows()));
@@ -96,6 +96,16 @@ int main() {
 					case sf::Keyboard::Scancode::Space:
 					    gs.togglePause();
 						buttonPressed.setString("[space]");
+						break;
+					case sf::Keyboard::Scancode::Slash:
+						buttonPressed.setString("[/]");
+						text.setString("gEneRAtiNg ChAoS!!!");
+						text.setFillColor(sf::Color::Red);
+						window.draw(buttonPressed);
+						window.draw(text);
+					    gs.placeChaos();
+						text.setString(std::format("It Lives! scale:{} ({}X{})", gs.getScale(), gs.getCols(), gs.getRows()));
+						text.setFillColor(bannerColor);
 						break;
 					case sf::Keyboard::Scancode::Up:
 					    gs.placeGliderUR(mouseX, mouseY);
@@ -156,6 +166,10 @@ int main() {
 					case sf::Keyboard::Scancode::M:
 						buttonPressed.setString("[M]");
 					    gs.updateToMax();
+						break;
+					case sf::Keyboard::Scancode::P:
+					    gs.togglePause();
+						buttonPressed.setString("[P]");
 						break;
 					case sf::Keyboard::Scancode::R:
 					    gs.placeRing(mouseX, mouseY);

@@ -4,6 +4,7 @@
 #include <vector>
 #include <set>
 
+
 struct Cell {
     uint32_t x;
 	uint32_t y;
@@ -82,6 +83,9 @@ class Grid {
 	}
 
 	int countLiveNeighbors(const Cell& cell){
+		size_t cellIdx = cell.y * m_cols + cell.x;
+		size_t matrix_size = m_cols * m_rows;
+		if(cellIdx >= matrix_size) return 0;
 		return m_u8_matrix[ cell.y * m_cols + cell.x] >> 1;
 	}
 

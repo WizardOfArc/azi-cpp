@@ -1,7 +1,6 @@
 #pragma once
 #include <cstddef>
 #include <cstdint>
-#include <set>
 #include <vector>
 #include <format>
 #include "Grid.hpp"
@@ -41,11 +40,7 @@ class GameState {
         }
 
         void updateNursery(){
-            m_nursery.clear();
-            auto neighbors = m_grid.getDeadNeighbors();
-            for( const auto neighbor : neighbors){
-                m_nursery.insert(neighbor);
-            }
+            m_nursery = m_grid.getDeadNeighbors();
         }
 
         uint32_t column(int x){
@@ -65,27 +60,27 @@ class GameState {
         }
 
         std::vector<Cell> getNursery(){
-            std::vector<Cell> nursery;
-            for(auto cell: m_nursery){
-                nursery.push_back(cell);
-            }
-            return nursery;
+            return m_nursery;
         }
 
         void calculateNextRound(){
             std::vector<Cell> toDie;
             std::vector<Cell> toLive;
             std::vector<Cell> toRemoveFromNursery;
+            std::vector<Cell> living;
             for(const auto live: m_live){
                 int neighbors = m_grid.countLiveNeighbors(live);
                 if(neighbors < 2 || neighbors > 3){
                     toDie.push_back(live);
+                } else {
+                    living.push_back(live);
                 }
             }
             for(const auto nurse: m_nursery){
                 int neighbors = m_grid.countLiveNeighbors(nurse);
                 if(neighbors == 3){
                     toLive.push_back(nurse);
+                    living.push_back(nurse);
                 } else if (neighbors == 0){
                     toRemoveFromNursery.push_back(nurse);
                 }
@@ -95,13 +90,12 @@ class GameState {
             }
 
             for(auto kill: toDie){
-                m_live.erase(kill);
                 m_grid.killCell(kill);
             }
             for(auto generate: toLive){
-                m_live.insert(generate);
                 m_grid.birthCell(generate);
             }
+            m_live = living;
             updateNursery();
         }
 
@@ -121,6 +115,20 @@ class GameState {
                 .scrnY=static_cast<float>(m_grid.posY(cell.y))
             };
         }
+    
+    void placeChaos(){
+         for(uint32_t row = 0; row < getRows(); row++){
+            for(uint32_t col = 0; col < getCols(); col++){
+                if(m_flipCoin()){
+                    Cell newCell{static_cast<uint32_t>(col), static_cast<uint32_t>(row)};
+                    m_live.push_back(newCell);
+                    m_grid.birthCell(newCell);
+                }
+            }
+         }
+         updateNursery();
+
+    }
 
     void placeShape(int posX, int posY, std::vector<std::vector<bool>> layout){
          /*
@@ -157,7 +165,7 @@ class GameState {
                     cellY = static_cast<uint32_t>((originRow + rowOffest) + static_cast<int>(m_grid.getRows()));
                 }
                 Cell newCell{cellX, cellY};
-                m_live.insert(newCell);
+                m_live.push_back(newCell);
                 m_grid.birthCell(newCell);
             }
          }
@@ -290,11 +298,12 @@ class GameState {
     }
 
     void updateGridScale(int scale){
+        auto potentialScale = static_cast<size_t>(scale);
         if(m_at_max) {
             m_at_max = false;
+        } else if ( potentialScale == m_scale){
+            return;
         }
-        auto potentialScale = static_cast<size_t>(scale);
-        if(potentialScale == m_scale) return;
         m_scale = static_cast<size_t>(scale);
         m_paused = true;
         clear();
@@ -343,10 +352,15 @@ class GameState {
 
     private:
         Grid m_grid;
-        std::set<Cell> m_live;
-        std::set<Cell> m_nursery;   
+        std::vector<Cell> m_live;
+        std::vector<Cell> m_nursery;   
         bool m_paused;
         size_t m_scale;
         bool m_at_max;
         const std::vector<uint32_t> m_sizes{1,2,4,5,10};
+
+        bool m_flipCoin() {
+            auto r = rand() >> 2;
+            return r % 2 == 1;
+        }
 };
