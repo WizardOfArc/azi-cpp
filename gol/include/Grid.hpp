@@ -122,7 +122,7 @@ class Grid {
 		size_t upY = cell.y == 0 ? m_rows - 1 : cell.y - 1;
 		size_t dnY = cell.y == m_rows - 1 ? 0 : cell.y + 1;
 		size_t ltX = cell.x == 0 ? m_cols - 1 : cell.x - 1;
-		size_t rtX = cell.y == m_cols - 1 ? 0 : cell.x + 1;
+		size_t rtX = cell.x == m_cols - 1 ? 0 : cell.x + 1;
 		// ones bit is liveness bit the remaining bits are live neighbor count
 		m_u8_matrix[ upY * m_cols + cell.x ] -= 2; 
 		m_u8_matrix[  upY * m_cols + rtX ] -= 2;
@@ -143,7 +143,7 @@ class Grid {
 		size_t upY = cell.y == 0 ? m_rows - 1 : cell.y - 1;
 		size_t dnY = cell.y == m_rows - 1 ? 0 : cell.y + 1;
 		size_t ltX = cell.x == 0 ? m_cols - 1 : cell.x - 1;
-		size_t rtX = cell.y == m_cols - 1 ? 0 : cell.x + 1;
+		size_t rtX = cell.x == m_cols - 1 ? 0 : cell.x + 1;
 		// ones bit is liveness bit the remaining bits are live neighbor count
 		m_u8_matrix[ upY * m_cols + cell.x ] += 2; 
 		m_u8_matrix[  upY * m_cols + rtX ] += 2;
