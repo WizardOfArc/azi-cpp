@@ -3,11 +3,13 @@
 #include <cstdint>
 #include <set>
 #include <vector>
+#include <format>
 #include "Grid.hpp"
 
 
 struct CellRenderData {
-    float radius;
+    float width;
+    float height;
     float scrnX;
     float scrnY;
 };
@@ -108,7 +110,8 @@ class GameState {
 
         CellRenderData getCellRenderData(const Cell& cell){
             return CellRenderData{
-                .radius=m_grid.getCellRadius(),
+                .width=m_grid.getCellWidth(),
+                .height=m_grid.getCellHeight(),
                 .scrnX=static_cast<float>(m_grid.posX(cell.x)),
                 .scrnY=static_cast<float>(m_grid.posY(cell.y))
             };
@@ -276,6 +279,9 @@ class GameState {
     }
 
     void updateGridScale(int scale){
+        if(m_at_max) {
+            m_at_max = false;
+        }
         auto potentialScale = static_cast<size_t>(scale);
         if(potentialScale == m_scale) return;
         m_scale = static_cast<size_t>(scale);
@@ -285,6 +291,15 @@ class GameState {
         const uint32_t gridCols = 40*requestedScale;
         const uint32_t gridRows = 30*requestedScale;
         m_grid.updateDimensions(gridCols, gridRows);
+        m_paused = false;
+    }
+
+    void updateToMax(){
+        if(m_at_max) return;
+        m_at_max = true;
+        m_paused = true;
+        clear();
+        m_grid.updateDimensions(800, 600);
         m_paused = false;
     }
 
@@ -308,8 +323,11 @@ class GameState {
         return m_grid.getRows();
     }
     
-    size_t getScale() {
-        return m_scale;
+    std::string getScale() {
+        if(m_at_max){
+            return "MAX";
+        }
+        return std::format("{}",m_scale);
     }
 
     private:
@@ -318,5 +336,6 @@ class GameState {
         std::set<Cell> m_nursery;   
         bool m_paused;
         size_t m_scale;
+        bool m_at_max;
         const std::vector<uint32_t> m_sizes{1,2,4,5,10};
 };

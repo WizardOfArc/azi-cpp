@@ -76,7 +76,7 @@ int main() {
 // run the program as long as the window is open
     while (window.isOpen()) {
 	    if(gs.isPaused()){
-			text.setString(std::format("It's Paused [||] <spacebar> to unpause.", gs.getScale(), gs.getCols(), gs.getRows()));
+			text.setString(std::format("It's Paused [||] <spacebar> to unpause."));
 			text.setFillColor(sf::Color(200, 128, 0));
 		} else {
 			text.setString(std::format("It Lives! scale:{} ({}X{})", gs.getScale(), gs.getCols(), gs.getRows()));
@@ -149,6 +149,10 @@ int main() {
 						buttonPressed.setString("[K]");
 					    gs.clear();
 						break;
+					case sf::Keyboard::Scancode::M:
+						buttonPressed.setString("[M]");
+					    gs.updateToMax();
+						break;
 					case sf::Keyboard::Scancode::R:
 					    gs.placeRing(mouseX, mouseY);
 						buttonPressed.setString("[R]");
@@ -191,19 +195,17 @@ int main() {
 		// render green circle per live cell
 		for(const auto live: gs.getLivingCells()){
 			auto crd = gs.getCellRenderData(live);
-           sf::CircleShape liveCell(crd.radius);
+			sf::RectangleShape liveCell({crd.width, crd.height});
 		   liveCell.setPosition({crd.scrnX,crd.scrnY});
 		   liveCell.setFillColor(sf::Color::Green);
 		   window.draw(liveCell);
 		}
 		
-		// render faded purple per nursery 
-		// /*  // uncomment to see potential places for life
 		for(const auto nurse: gs.getNursery()){
 		   auto crd = gs.getCellRenderData(nurse);
-           sf::CircleShape nurseCell(crd.radius);
+			sf::RectangleShape nurseCell({crd.width, crd.height});
 		   nurseCell.setPosition({crd.scrnX,crd.scrnY});
-		   nurseCell.setFillColor(sf::Color::Blue);
+		   nurseCell.setFillColor(sf::Color(0,0,255));
 		   window.draw(nurseCell);
 		}
 

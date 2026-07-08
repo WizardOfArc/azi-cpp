@@ -123,6 +123,14 @@ class Grid {
 		return static_cast<float>(m_cell_radius);
 	}
 
+	float getCellWidth(){
+		return static_cast<float>(m_cell_width);
+	}
+
+	float getCellHeight(){
+		return static_cast<float>(m_cell_height);
+	}
+
 	void killCell(Cell& cell){
 		m_matrix[cell.y][cell.x] = false;
 	}
