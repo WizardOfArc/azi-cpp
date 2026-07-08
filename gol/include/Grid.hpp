@@ -2,6 +2,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <vector>
+#include <set>
 
 struct Cell {
     uint32_t x;
@@ -69,25 +70,13 @@ class Grid {
 		return m_rows;
 	}
 
-	std::vector<Cell> getDeadNeighbors(const Cell& cell){
-		auto originY = cell.y;
-		uint32_t upY = originY == 0 ? m_rows - 1 : originY - 1;
-		uint32_t dnY = originY == m_rows - 1 ? 0 : originY + 1;
-		std::vector<uint32_t> yCoords{upY, originY, dnY};
 
-		auto originX = cell.x;
-		uint32_t ltX = originX == 0 ? m_cols - 1 : originX - 1;
-		uint32_t rtX = originX == m_cols - 1 ? 0 : originX + 1;
-		std::vector<uint32_t> xCoords{ltX, originX, rtX};
-
+	std::vector<Cell> getDeadNeighbors(){
 		std::vector<Cell> neighbors;
-		for(auto y : yCoords){
-			for(auto x: xCoords){
-				if(x == originX && y == originY) continue;
-				if(m_u8_matrix[y*m_cols + x] % 2 == 0){
-					neighbors.push_back(Cell{x,y});
-				}
-			}
+		for (auto nIdx : m_deadNeighbors){
+			auto x = static_cast<uint32_t>(nIdx % m_cols);
+			auto y = static_cast<uint32_t>(nIdx / m_cols);
+			neighbors.push_back(Cell{x,y});
 		}
 		return neighbors;
 	}
@@ -104,6 +93,11 @@ class Grid {
 		return static_cast<float>(m_cell_height);
 	}
 
+	void removeDeadNeighbor(Cell &cell){
+		size_t nIdx = cell.y * m_cols + cell.x;
+		m_deadNeighbors.erase(nIdx);
+	}
+
 	void killCell(Cell& cell){
 		size_t idx = cell.y * m_cols + cell.x;
 		m_u8_matrix[idx] &= (15 << 1); // bitwise & with 11110 to turn off last bit only
@@ -112,38 +106,53 @@ class Grid {
 		size_t dnY = cell.y == m_rows - 1 ? 0 : cell.y + 1;
 		size_t ltX = cell.x == 0 ? m_cols - 1 : cell.x - 1;
 		size_t rtX = cell.x == m_cols - 1 ? 0 : cell.x + 1;
+		std::vector<size_t> neighborIdxs = {
+		 upY * m_cols + cell.x,
+		 upY * m_cols + rtX,
+		 cell.y * m_cols + rtX,
+		 dnY * m_cols + rtX,
+		 dnY * m_cols + cell.x,
+		 dnY * m_cols + ltX,
+		 cell.y * m_cols + ltX,
+		 upY * m_cols + ltX
+		};
+		for(auto nIdx : neighborIdxs){
+			m_u8_matrix[nIdx] -= 2;
+			if(m_u8_matrix[nIdx] % 2 == 1){
+				m_deadNeighbors.erase(nIdx);
+			}
+		}
 		// ones bit is liveness bit the remaining bits are live neighbor count
-		m_u8_matrix[ upY * m_cols + cell.x ] -= 2; 
-		m_u8_matrix[  upY * m_cols + rtX ] -= 2;
-		m_u8_matrix[  cell.y * m_cols + rtX ] -= 2;
-		m_u8_matrix[  dnY * m_cols + rtX ] -= 2;
-		m_u8_matrix[  dnY * m_cols + cell.x ] -= 2;
-		m_u8_matrix[  dnY * m_cols + ltX ] -= 2;
-		m_u8_matrix[  cell.y * m_cols + ltX ] -= 2;
-        m_u8_matrix[  upY * m_cols + ltX ] -= 2;
-		// TODO add logic to update neighboring cells'
-		// live neighbor count
 	}
 
 	void birthCell(Cell& cell){
 		size_t idx = cell.y * m_cols + cell.x;
 		m_u8_matrix[idx] |= 1;
+		m_deadNeighbors.erase(idx);
 		// update neighbors
 		size_t upY = cell.y == 0 ? m_rows - 1 : cell.y - 1;
 		size_t dnY = cell.y == m_rows - 1 ? 0 : cell.y + 1;
 		size_t ltX = cell.x == 0 ? m_cols - 1 : cell.x - 1;
 		size_t rtX = cell.x == m_cols - 1 ? 0 : cell.x + 1;
+        
+		std::vector<size_t> neighborIdxs = {
+		 upY * m_cols + cell.x,
+		 upY * m_cols + rtX,
+		 cell.y * m_cols + rtX,
+		 dnY * m_cols + rtX,
+		 dnY * m_cols + cell.x,
+		 dnY * m_cols + ltX,
+		 cell.y * m_cols + ltX,
+		 upY * m_cols + ltX
+		};
+
+		for(auto nIdx : neighborIdxs){
+			m_u8_matrix[nIdx] += 2;
+			if(m_u8_matrix[nIdx] % 2 == 0){
+                m_deadNeighbors.insert(nIdx);
+			}
+		}
 		// ones bit is liveness bit the remaining bits are live neighbor count
-		m_u8_matrix[ upY * m_cols + cell.x ] += 2; 
-		m_u8_matrix[  upY * m_cols + rtX ] += 2;
-		m_u8_matrix[  cell.y * m_cols + rtX ] += 2;
-		m_u8_matrix[  dnY * m_cols + rtX ] += 2;
-		m_u8_matrix[  dnY * m_cols + cell.x ] += 2;
-		m_u8_matrix[  dnY * m_cols + ltX ] += 2;
-		m_u8_matrix[  cell.y * m_cols + ltX ] += 2;
-        m_u8_matrix[  upY * m_cols + ltX ] += 2;
-		// TODO add logic to update neighboring cells'
-		// live neighbor count
 	}
 
   private:
@@ -154,14 +163,6 @@ class Grid {
 	 uint32_t m_cell_width;
 	 uint32_t m_cell_height;
 	 std::vector<uint8_t> m_u8_matrix;
-	 // TODO replace vector vector of bool
-	 // with a vector of char or uint8
-	 // where we can store neighbor counts in bits 
-	 // and liveness in the least bit
-	 //  00000000
-	 //     ^  ^^
-	 //     |  |+-- liveness bit
-	 //     |  +-- end live neighbor count bits
-	 //     +--  start live neighbor count bits
+	 std::set<size_t> m_deadNeighbors;
 	 //  don't care about the rest
 };

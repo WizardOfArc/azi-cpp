@@ -42,11 +42,9 @@ class GameState {
 
         void updateNursery(){
             m_nursery.clear();
-            for(auto living : m_live ){
-                auto neighbors = m_grid.getDeadNeighbors(living);
-                for( const auto neighbor : neighbors){
-                    m_nursery.insert(neighbor);
-                }
+            auto neighbors = m_grid.getDeadNeighbors();
+            for( const auto neighbor : neighbors){
+                m_nursery.insert(neighbor);
             }
         }
 
@@ -77,6 +75,7 @@ class GameState {
         void calculateNextRound(){
             std::vector<Cell> toDie;
             std::vector<Cell> toLive;
+            std::vector<Cell> toRemoveFromNursery;
             for(const auto live: m_live){
                 int neighbors = m_grid.countLiveNeighbors(live);
                 if(neighbors < 2 || neighbors > 3){
@@ -87,8 +86,14 @@ class GameState {
                 int neighbors = m_grid.countLiveNeighbors(nurse);
                 if(neighbors == 3){
                     toLive.push_back(nurse);
+                } else if (neighbors == 0){
+                    toRemoveFromNursery.push_back(nurse);
                 }
             }
+            for(auto denurse: toRemoveFromNursery){
+                m_grid.removeDeadNeighbor(denurse);
+            }
+
             for(auto kill: toDie){
                 m_live.erase(kill);
                 m_grid.killCell(kill);
