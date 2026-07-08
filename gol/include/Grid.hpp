@@ -3,8 +3,6 @@
 #include <cstdint>
 #include <vector>
 
-#include <print>
-
 struct Cell {
     uint32_t x;
 	uint32_t y;
@@ -25,8 +23,6 @@ class Grid {
 	 {
 		m_cell_width = static_cast<uint32_t>(static_cast<float>(m_screen_w) / static_cast<float>(m_cols));
 		m_cell_height = static_cast<uint32_t>(static_cast<float>(m_screen_h) / static_cast<float>(m_rows));
-        uint32_t minimum = m_cell_height < m_cell_width ? m_cell_height : m_cell_width;
-		m_cell_radius =  minimum / 2;
 	 }
 
 	 explicit Grid(){
@@ -39,9 +35,6 @@ class Grid {
 		 m_u8_matrix = std::vector<uint8_t>(rows*cols);
 		m_cell_width = static_cast<uint32_t>(static_cast<float>(m_screen_w) / static_cast<float>(m_cols));
 		m_cell_height = static_cast<uint32_t>(static_cast<float>(m_screen_h) / static_cast<float>(m_rows));
-        uint32_t minimum = m_cell_height < m_cell_width ? m_cell_height : m_cell_width;
-		m_cell_radius =  minimum / 2;
-
 	}
 
     uint32_t maxPosX(){
@@ -103,10 +96,6 @@ class Grid {
 		return m_u8_matrix[ cell.y * m_cols + cell.x] >> 1;
 	}
 
-	float getCellRadius(){
-		return static_cast<float>(m_cell_radius);
-	}
-
 	float getCellWidth(){
 		return static_cast<float>(m_cell_width);
 	}
@@ -164,7 +153,6 @@ class Grid {
 	 uint32_t m_screen_h;
 	 uint32_t m_cell_width;
 	 uint32_t m_cell_height;
-	 uint32_t m_cell_radius;
 	 std::vector<uint8_t> m_u8_matrix;
 	 // TODO replace vector vector of bool
 	 // with a vector of char or uint8
