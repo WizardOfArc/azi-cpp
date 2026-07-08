@@ -52,15 +52,15 @@ class GameState {
         }
 
         std::vector<Cell> getLivingCells(){
-            std::vector<Cell> livingCells;
-            for(auto cell: m_live){
-                livingCells.push_back(cell);
-            }
-            return livingCells;
+            return m_live;
         }
 
         std::vector<Cell> getNursery(){
             return m_nursery;
+        }
+
+        uint32_t getLiveCount() { 
+            return m_live_count;
         }
 
         void calculateNextRound(){
@@ -90,9 +90,11 @@ class GameState {
             }
 
             for(auto kill: toDie){
+                m_live_count -= 1;
                 m_grid.killCell(kill);
             }
             for(auto generate: toLive){
+                m_live_count += 1;
                 m_grid.birthCell(generate);
             }
             m_live = living;
@@ -105,6 +107,7 @@ class GameState {
             }
             m_nursery.clear();
             m_live.clear();
+            m_live_count = 0;
         }
 
         CellRenderData getCellRenderData(const Cell& cell){
@@ -122,6 +125,7 @@ class GameState {
                 if(m_flipCoin()){
                     Cell newCell{static_cast<uint32_t>(col), static_cast<uint32_t>(row)};
                     m_live.push_back(newCell);
+                    m_live_count += 1;
                     m_grid.birthCell(newCell);
                 }
             }
@@ -166,6 +170,7 @@ class GameState {
                 }
                 Cell newCell{cellX, cellY};
                 m_live.push_back(newCell);
+                m_live_count += 1;
                 m_grid.birthCell(newCell);
             }
          }
@@ -353,6 +358,7 @@ class GameState {
     private:
         Grid m_grid;
         std::vector<Cell> m_live;
+        uint32_t m_live_count = 0;
         std::vector<Cell> m_nursery;   
         bool m_paused;
         size_t m_scale;

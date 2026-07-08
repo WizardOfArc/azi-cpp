@@ -40,6 +40,12 @@ int main() {
 	text.setStyle(sf::Text::Bold | sf::Text::Underlined);
 	text.setPosition({150.f, 0.f});
 
+	sf::Text liveCount(font);
+	liveCount.setString("0 living");
+	liveCount.setFillColor(sf::Color(0, 200, 220));
+	liveCount.setStyle(sf::Text::Bold | sf::Text::Italic);
+	liveCount.setPosition({0.f, 0.f});
+
 	sf::RectangleShape sideBorder;
 	sideBorder.setSize({
 		static_cast<float>(screenWidth - gs.rightMost()+1 ),
@@ -171,6 +177,9 @@ int main() {
 					    gs.togglePause();
 						buttonPressed.setString("[P]");
 						break;
+					case sf::Keyboard::Scancode::Q:
+						window.close();
+						break;
 					case sf::Keyboard::Scancode::R:
 					    gs.placeRing(mouseX, mouseY);
 						buttonPressed.setString("[R]");
@@ -227,6 +236,8 @@ int main() {
 		   window.draw(nurseCell);
 		}
 
+		liveCount.setString(std::format("{} living", gs.getLiveCount()));
+		window.draw(liveCount);
 		window.draw(mousePos);
 		window.draw(buttonPressed);
 		window.draw(sideBorder);
