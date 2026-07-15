@@ -85,7 +85,7 @@ int main() {
 			text.setString(std::format("It's Paused [||] <spacebar> or P to unpause."));
 			text.setFillColor(sf::Color(200, 128, 0));
 		} else {
-			text.setString(std::format("It Lives! scale:{} ({}X{})", gs.getScale(), gs.getCols(), gs.getRows()));
+			text.setString(std::format("GoL! scale:{} ({}X{})", gs.getScale(), gs.getCols(), gs.getRows()));
 			text.setFillColor(bannerColor);
 		}
         // check all the window's events that were triggered since the last iteration of the loop
@@ -110,7 +110,7 @@ int main() {
 						window.draw(buttonPressed);
 						window.draw(text);
 					    gs.placeChaos();
-						text.setString(std::format("It Lives! scale:{} ({}X{})", gs.getScale(), gs.getCols(), gs.getRows()));
+						text.setString(std::format("GoL! scale:{} ({}X{})", gs.getScale(), gs.getCols(), gs.getRows()));
 						text.setFillColor(bannerColor);
 						break;
 					case sf::Keyboard::Scancode::Up:
