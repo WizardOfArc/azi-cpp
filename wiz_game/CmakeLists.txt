@@ -31,7 +31,7 @@ CPMAddPackage(
     VERSION 3.0.0
     OPTIONS 
         # Disable unused components to speed up build
-        "SFML_BUILD_AUDIO OFF"      # Enable with ON + link SFML::Audio in CMakeLists.txt
+        "SFML_BUILD_AUDIO ON"      # Enable with ON + link SFML::Audio in CMakeLists.txt
         "SFML_BUILD_GRAPHICS ON"    # Enable with ON + link SFML::Graphics in CMakeLists.txt
         "SFML_BUILD_NETWORK OFF"    # Enable with ON + link SFML::Network in CMakeLists.txt
         "SFML_BUILD_WINDOW ON"      # ON by default; link via $<$<PLATFORM_ID:Windows>:SFML::Main> (Windows only)
@@ -42,6 +42,7 @@ add_subdirectory(src bin)
 add_subdirectory(include)
 
 target_link_libraries(wizard_game PRIVATE
+    SFML::Audio
     SFML::Graphics 
     $<$<PLATFORM_ID:Windows>:SFML::Main>
 )

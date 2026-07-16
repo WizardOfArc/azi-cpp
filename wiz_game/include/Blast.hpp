@@ -62,7 +62,7 @@ class Blast {
               return;
            }
            auto ratio = age / LIFETIME;
-           auto percent = static_cast<int>(ratio * 100);
+           auto percent = static_cast<uint8_t>(ratio * 100);
            m_phase_of_life = percent / 5;
        }
 
@@ -78,7 +78,7 @@ class Blast {
            return static_cast<size_t>(m_id - 1);
        }
 
-       int getLifePhase(){
+       uint8_t getLifePhase(){
           return m_phase_of_life;
        }
 
@@ -91,7 +91,7 @@ class Blast {
        float m_v_y;
        bool m_live;
        int m_id;
-       int m_phase_of_life;
+       uint8_t m_phase_of_life;
        std::chrono::time_point<std::chrono::system_clock> m_birth_time;
        std::chrono::time_point<std::chrono::system_clock> m_update_time;
 };

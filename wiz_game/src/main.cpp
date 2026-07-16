@@ -1,3 +1,5 @@
+#include "SFML/Audio/Music.hpp"
+#include "SFML/Audio/SoundBuffer.hpp"
 #include "SFML/Graphics/CircleShape.hpp"
 #include "SFML/Graphics/Color.hpp"
 #include "SFML/Graphics/Rect.hpp"
@@ -11,6 +13,7 @@
 #include "SFML/Window/Mouse.hpp"
 #include "SFML/Window/VideoMode.hpp"
 #include <SFML/Graphics.hpp>
+#include <SFML/Audio.hpp>
 
 #include "WizardState.hpp"
 #include "Blast.hpp"
@@ -31,20 +34,21 @@ const sf::Color ageColorPallette[] = {
     sf::Color(255,45,255),
     sf::Color(255,15,255),
     sf::Color(255,0,255),
-    sf::Color(235,0,225),
-    sf::Color(215,0,195),
-    sf::Color(195,0,165),
-    sf::Color(175,0,135),
-    sf::Color(155,0,105),
-    sf::Color(135,0,75),
-    sf::Color(115,0,45),
-    sf::Color(95,0,15),
-    sf::Color(75,0,0),
-    sf::Color(55,0,0),
+    sf::Color(255,0,225),
+    sf::Color(255,0,195),
+    sf::Color(255,0,165),
+    sf::Color(255,0,135),
+    sf::Color(255,0,105),
+    sf::Color(255,0,75),
+    sf::Color(255,0,45),
+    sf::Color(255,0,15),
+    sf::Color(255,0,0),
+    sf::Color(255,0,0),
 };
 
 sf::Color blastColor(Blast &blast){
-    return ageColorPallette[blast.getLifePhase()];
+    auto color = ageColorPallette[blast.getLifePhase()];
+    return color;
 }
 
 float blastRadius(Blast &blast){
@@ -75,6 +79,7 @@ void removeDead(std::vector<Blast> &toUpdate){
 }
 
 int main() {
+    // TODO: add game state
     const sf::String title = "The Wizard Game";
     const uint32_t screenWidth = 800;
     const uint32_t screenHeight = 600;
@@ -82,7 +87,7 @@ int main() {
     window.setFramerateLimit(60);
 
     sf::Image icon;
-    if (icon.loadFromFile("wizard_sprite.png")) {
+    if (icon.loadFromFile("wizard_sprite.png")) { // not a mistake - currently using sprite texture as icon
         window.setIcon(icon);
     }
 
@@ -91,6 +96,18 @@ int main() {
 
     sf::Texture spriteTexture("wizard_sprite.png");
     sf::Sprite wizard(spriteTexture);
+
+    sf::Texture backgroundTexture("grass.png");
+    backgroundTexture.setRepeated(true);
+    sf::Sprite background(backgroundTexture, sf::IntRect{{0,0},{screenWidth, screenHeight}});
+    
+    sf::SoundBuffer blastBuffer("blast.wav");
+    sf::Sound blastSound(blastBuffer);
+
+    sf::Music music("WizGame.wav");
+    music.setLooping(true);
+    music.setVolume(50.f);
+    music.play();
 
     auto wizardXpos = screenWidth / 2;
     auto wizardYpos = screenHeight - 200; 
@@ -110,6 +127,8 @@ int main() {
 
     bool hasGlow;
     WizardState wizState;
+
+    float speed = 4.f;
 
     while (window.isOpen()){
         int orbVerticalOffset = 45;
@@ -167,12 +186,10 @@ int main() {
             } else if (const auto *keyReleased = event->getIf<sf::Event::KeyReleased>()){
                 auto scancode = keyReleased->scancode;
                 auto vector = normalize(scepterX, scepterY, static_cast<float>(mousePositionX), static_cast<float>(mousePositionY));
-                float speed = 1.f;
                 switch (scancode){
                     case sf::Keyboard::Scancode::Space:
-                       // remove glow
                        hasGlow = false;
-                       // release blast (create and add to vector)
+                       blastSound.play();
                        blasts.push_back(Blast{scepterX, scepterY, vector.x*speed, vector.y*speed});
                        break;
                     default: 
@@ -186,7 +203,7 @@ int main() {
 
         removeDead(blasts);
         window.clear(sf::Color::Black);
-
+        window.draw(background);
         text.setString(std::format("mouse: ({},{})", mousePositionX, mousePositionY));
         text.setCharacterSize(20);
         text.setFillColor(sf::Color(255,0,255));
@@ -237,6 +254,7 @@ int main() {
 
         window.display();
     }
+    music.stop();
     return 0;
 
 }
