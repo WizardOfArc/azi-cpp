@@ -198,6 +198,11 @@ int main() {
             } else if (const auto *mouseMoved = event->getIf<sf::Event::MouseMoved>()) {
                 mousePositionX = mouseMoved->position.x;
                 mousePositionY = mouseMoved->position.y;
+            } else if (const auto *mouseButtonClicked = event->getIf<sf::Event::MouseButtonPressed>()) {
+                [[maybe_unused]] auto mbc = mouseButtonClicked;
+                auto vector = normalize(scepterX, scepterY, static_cast<float>(mousePositionX), static_cast<float>(mousePositionY));
+                blastSound.play();
+                blasts.push_back(Blast{scepterX, scepterY, vector.x*speed, vector.y*speed});
             }
         }
 
