@@ -101,13 +101,18 @@ int main() {
     backgroundTexture.setRepeated(true);
     sf::Sprite background(backgroundTexture, sf::IntRect{{0,0},{screenWidth, screenHeight}});
     
+    // -- Sounds and Music ---
     sf::SoundBuffer blastBuffer("blast.wav");
     sf::Sound blastSound(blastBuffer);
+
+    sf::SoundBuffer footstepsBuffer("footstep.wav");
+    sf::Sound footstepSound(footstepsBuffer);
 
     sf::Music music("WizGame.wav");
     music.setLooping(true);
     music.setVolume(50.f);
     music.play();
+    // -- end sounds and music
 
     auto wizardXpos = screenWidth / 2;
     auto wizardYpos = screenHeight - 200; 
@@ -159,6 +164,7 @@ int main() {
                     case sf::Keyboard::Scancode::Space:
                        // add glow
                        hasGlow = true;
+                       footstepSound.play();
                        break;
                     case sf::Keyboard::Scancode::Right:
                        if(wizardBox.position.x + wizardBox.size.x <= screenWidth - 5){
@@ -168,16 +174,19 @@ int main() {
                     case sf::Keyboard::Scancode::Left:
                        if(wizardBox.position.x >= 5){
                             wizardXpos -= 5;
+                            footstepSound.play();
                        }
                        break;
                     case sf::Keyboard::Scancode::Down:
                        if(wizardBox.position.y + wizardBox.size.y <= screenHeight - 5){
                             wizardYpos += 5;
+                            footstepSound.play();
                        }
                        break;
                     case sf::Keyboard::Scancode::Up:
                        if(wizardBox.position.y >= 5){
                             wizardYpos -= 5;
+                            footstepSound.play();
                        }
                        break;
                     default:
