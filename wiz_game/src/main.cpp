@@ -81,8 +81,8 @@ void removeDead(std::vector<Blast> &toUpdate){
 int main() {
     // TODO: add game state
     const sf::String title = "The Wizard Game";
-    const uint32_t screenWidth = 800;
-    const uint32_t screenHeight = 600;
+    const uint32_t screenWidth = 1600;
+    const uint32_t screenHeight = 1000;
     sf::RenderWindow window(sf::VideoMode({screenWidth, screenHeight}), title);
     window.setFramerateLimit(60);
 
@@ -108,9 +108,13 @@ int main() {
     sf::SoundBuffer footstepsBuffer("footstep.wav");
     sf::Sound footstepSound(footstepsBuffer);
 
+    sf::SoundBuffer bounceBuffer("bounce.wav");
+    sf::Sound bounceSound(bounceBuffer);
+    bounceSound.setVolume(50.f);
+
     sf::Music music("WizGame.wav");
     music.setLooping(true);
-    music.setVolume(50.f);
+    music.setVolume(30.f);
     music.play();
     // -- end sounds and music
 
@@ -164,11 +168,11 @@ int main() {
                     case sf::Keyboard::Scancode::Space:
                        // add glow
                        hasGlow = true;
-                       footstepSound.play();
                        break;
                     case sf::Keyboard::Scancode::Right:
                        if(wizardBox.position.x + wizardBox.size.x <= screenWidth - 5){
                             wizardXpos += 5;
+                            footstepSound.play();
                        }
                        break;
                     case sf::Keyboard::Scancode::Left:
@@ -244,15 +248,19 @@ int main() {
             auto bY = blast.getY();
             if(blast.isLive() && bX < 0.f){
                 blast.bounceX(0.f);
+                bounceSound.play();
             }
             if(blast.isLive() && bX > static_cast<float>(screenWidth)){
                 blast.bounceX(screenWidth);
+                bounceSound.play();
             }
             if(blast.isLive() && bY > static_cast<float>(screenHeight)){
                 blast.bounceY(screenHeight);
+                bounceSound.play();
             }
             if(blast.isLive() && bY < 0.f){
                 blast.bounceY(0.f);
+                bounceSound.play();
             }
             if(blast.isLive()){
                 auto brad = blastRadius(blast);
