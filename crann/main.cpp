@@ -35,44 +35,48 @@ inline std::string safe_path_to_string(fs::path path){
     std::string name;
     try {
         name = path.string();
-    } catch(std::exception e){
+    } catch(std::filesystem::filesystem_error e){
         name  = std::format("UNPRINTABLE ({})", e.what());
     }
     return name;
 }
 
-void displayUnknown(std::filesystem::path path, int depth){
+void displayFile(fs::path path, int depth); // decl ahead
+
+void displayGeneric(std::filesystem::path path, int depth, std::string suffix){
     auto prefix = depth_prefix(depth);
     auto fn = path.filename();
     auto name = safe_path_to_string(fn.string());
-    std::println("{} {} unknwn type <shrug>", prefix, name);
+    std::println("{}{}{}", prefix, name, suffix);
+} 
+
+void displayUnknown(std::filesystem::path path, int depth){
+    std::string suffix = " unknown type <shrug>";
+    displayGeneric(path, depth, suffix);
 }
 
 void displayNotExist(std::filesystem::path path, int depth){
-    auto prefix = depth_prefix(depth);
-    auto fn = path.filename();
-    auto name = safe_path_to_string(fn);
-    std::println("{} <<< {} DOES NOT EXIST >>>>", prefix, name);
+    std::string suffix = " <<< DOES NOT EXIST >>>>";
+    displayGeneric(path, depth, suffix);
 }
 
 void displaySimple(std::filesystem::path path, int depth){
-    std::string name;
-    auto filename = path.filename();
-    auto prefix = depth_prefix(depth);
-    name = safe_path_to_string(filename);
-    std::println("{}{}", prefix, name);
+    std::string suffix = "";
+    displayGeneric(path, depth, suffix);
 }
 
-void displayFile(fs::path path, int depth); // decl ahead
 
 void displayDirectory(fs::path path, int depth){
-    auto prefix = depth_prefix(depth);
-    auto filename = path.filename();
-    std::println("{}{} (dir)", prefix, safe_path_to_string(filename));
-    // scan dir to get members and for each call the appropriate display function
+    std::string suffix = ":";
+    displayGeneric(path, depth, suffix);
     for(auto dir_entry : fs::directory_iterator(path)){
-        auto name = dir_entry.path();
-        displayFile(name, depth+1);
+        try {
+            auto name = dir_entry.path();
+            displayFile(name, depth+1);
+
+        } catch (std::filesystem::filesystem_error ferr){
+            std::println("someone isn't happy {}", ferr.what());
+        }
     }
 }
 
@@ -89,19 +93,12 @@ void displayFile(fs::path path, int depth){
 }
 
 int main(int argc, char* argv[]){
+    fs::path dir;
     if(argc < 2){
-        std::println("No arguments were passed");
+        dir = ".";
     } else {
-        std::println("Argument passed");
-        std::println("-> {}", argv[1]);
-        if(argc > 2){
-            std::println("the following are ignored:");
-            for (int i = 2; i < argc; i++){
-                std::println(" - {}", argv[i]);
-            }
-        }
+        dir = argv[1];
     }
-    auto dir = argv[1];
     displayFile(dir, 0);
     return 0;
 }

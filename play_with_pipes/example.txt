@@ -1,0 +1,17 @@
+Hi there,
+I'm a bit of text here.
+Why am I here?
+I am here to test out my string heap.
+It's kind of a pyramid of text maker
+So
+The top of the pyramid with have shorter lines
+than the bottom
+
+blank lines are ignored
+
+and equal lines
+are alphabetize
+if numbers star
+5 will come bfr
+a or even 9 but
+only by charact
