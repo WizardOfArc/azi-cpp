@@ -26,6 +26,7 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <print>
 
 int Blast::count = 0;
 int Crab::crabs_created = 0;
@@ -139,9 +140,10 @@ int main() {
 
     sf::Font font("LeroyLettering.ttf");
     sf::Text text(font);
+    text.setOrigin({300, 50});
 
-    sf::Texture spriteTexture("wizard_sprite.png");
-    sf::Sprite wizard(spriteTexture);
+    sf::Texture wizardTexture("wizard_sprite.png");
+    sf::Sprite wizard(wizardTexture);
 
     sf::Texture spriteSheetTexture("sprite_sheet.png");
 
@@ -214,6 +216,8 @@ int main() {
         wizardCenter.y = static_cast<int>(wizCenterY);
         auto wizardWidth = wizardBox.size.x;
         auto wizardHeight = wizardBox.size.y;
+
+
         if(mousePosition.x >= wizCenterX){
             wizState.setDirection(WizardDirection::RIGHT);
         } else {
@@ -383,8 +387,21 @@ int main() {
                 if(wizardCollide){
                     text.setString("OUCH!!!");
                     text.setFillColor(sf::Color::Red);
-                    text.setCharacterSize(50);
-                    text.setPosition({static_cast<float>(screenWidth)/2, static_cast<float>(screenWidth)/2});
+                    text.setStyle(
+                        sf::Text::Bold |
+                        sf::Text::Underlined
+                    );
+                    text.setCharacterSize(150);
+                    text.setPosition({static_cast<float>(screenWidth)/2, static_cast<float>(screenHeight)/2});
+                }
+
+                for(auto &blast : blasts){
+                    auto bx = blast.getX();
+                    auto by = blast.getY();
+                    if(box.contains({bx, by})){
+                        a_crab.end();
+                        blast.end();
+                    }
                 }
 
             }
