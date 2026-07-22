@@ -129,6 +129,12 @@ int main() {
     sf::SoundBuffer blastBuffer("blast.wav");
     sf::Sound blastSound(blastBuffer);
 
+    sf::SoundBuffer zapBuffer("zap.wav");
+    sf::Sound zapSound(zapBuffer);
+
+    sf::SoundBuffer chargeBuffer("charging.wav");
+    sf::Sound chargeSound(chargeBuffer);
+
     sf::SoundBuffer footstepsBuffer("footstep.wav");
     sf::Sound footstepSound(footstepsBuffer);
 
@@ -204,8 +210,11 @@ int main() {
                        window.close();
                        break;
                     case sf::Keyboard::Scancode::Space:
-                       // add glow
                        charger.buildCharge();
+                       if(not chargeSound.isLooping()){
+                          chargeSound.setLooping(true);
+                          chargeSound.play();
+                       }
                        break;
                     case sf::Keyboard::Scancode::Right:
                        if(wizardBox.position.x + wizardBox.size.x <= screenWidth - 5){
@@ -244,6 +253,9 @@ int main() {
                        beam.setRotation(bDim.angle);
                        ray.setTTL(500);
                        beam.setFillColor(chargeOrbColor(charger.chargeLevel()));
+                       chargeSound.stop();
+                       chargeSound.setLooping(false);
+                       zapSound.play();
                        break;
                     default: 
                        // do nothing
@@ -283,9 +295,10 @@ int main() {
 
         glow.setPosition(scepterCenter);
         if(charger.isCharging()){
-            glow.setFillColor(chargeOrbColor(charger.chargeLevel()));
-            glow.setRadius(charger.chargeLevel() / 5);
-            glow.setOrigin({charger.chargeLevel() / 5, charger.chargeLevel() / 5});
+            auto chargeLevel = charger.chargeLevel();
+            glow.setFillColor(chargeOrbColor(chargeLevel));
+            glow.setRadius(chargeLevel / 5);
+            glow.setOrigin({chargeLevel / 5, chargeLevel / 5});
             window.draw(glow);
         }
         window.draw(wizard);

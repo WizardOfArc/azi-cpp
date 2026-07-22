@@ -1,9 +1,14 @@
 #pragma once
 
+#include <print>
 
 class Charger {
     public:
-       explicit Charger(){}
+       explicit Charger(){
+        m_charge_level = 0;
+        m_charging = false;
+        m_at_max = false;
+       }
 
        void buildCharge(){
             if(m_at_max) return;
@@ -28,6 +33,10 @@ class Charger {
 
        float chargeLevelPercent(){
           return m_charge_level / 100.f; 
+       }
+
+       std::string chargeState(){
+          return std::format("charging:{}, level:{}, at max:{}", m_charging, m_charge_level, m_at_max);
        }
 
     private:
