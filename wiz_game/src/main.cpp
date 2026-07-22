@@ -21,11 +21,14 @@
 #include "Blast.hpp"
 #include "Ray.hpp"
 #include "Charger.hpp"
+#include "Crab.hpp"
 
 #include <cmath>
 #include <cstddef>
+#include <cstdint>
 
 int Blast::count = 0;
+int Crab::crabs_created = 0;
 
 const sf::Color ageColorPallette[] = {
     sf::Color(255,255,255),
@@ -102,6 +105,25 @@ void removeDead(std::vector<Blast> &toUpdate){
     toUpdate = toKeep;
 }
 
+void removeDeadCrabs(std::vector<Crab> &toUpdate){
+    std::vector<Crab> toKeep;
+    for(auto &crab: toUpdate){
+        if(crab.isLive()){
+            toKeep.push_back(crab);
+        }
+    }
+    toUpdate.clear();
+    toUpdate = toKeep;
+}
+
+void spawnCrabs(int number, std::vector<Crab> &crabs, int scw, int sch){
+     for(int i=0; i < number; i++){
+        auto rndX = static_cast<float>(rand() % scw);
+        auto rndY = static_cast<float>(rand() % sch);
+        crabs.push_back(Crab{rndX, rndY, 30});
+     }
+}
+
 int main() {
     // TODO: add game state
     const sf::String title = "The Wizard Game";
@@ -120,6 +142,8 @@ int main() {
 
     sf::Texture spriteTexture("wizard_sprite.png");
     sf::Sprite wizard(spriteTexture);
+
+    sf::Texture spriteSheetTexture("sprite_sheet.png");
 
     sf::Texture backgroundTexture("grass.png");
     backgroundTexture.setRepeated(true);
@@ -160,9 +184,9 @@ int main() {
     sf::Vector2f scepterCenter;
     sf::Vector2f mousePosition;
 
-    // float scepterX;
-    // float scepterY;
     std::vector<Blast> blasts;
+
+    std::vector<Crab> crabs;
 
     Charger charger;
     WizardState wizState;
@@ -180,6 +204,8 @@ int main() {
     float gravity = 0.1f;
     float dampening = 0.7f;
     float speed = 5.f;
+
+    bool timeToSpawn = true;
 
     while (window.isOpen()){
         int orbVerticalOffset = 45;
@@ -273,8 +299,12 @@ int main() {
                 blasts.push_back(Blast{scepterCenter.x, scepterCenter.y, vector.x*speed, vector.y*speed});
             }
         }
-
+        if(timeToSpawn){
+            spawnCrabs(3, crabs, screenWidth, screenHeight);
+            timeToSpawn = false;
+        }
         removeDead(blasts);
+        removeDeadCrabs(crabs);
         window.clear(sf::Color::Black);
         window.draw(background);
         text.setString(std::format("mouse: ({},{})", mousePositionX, mousePositionY));
@@ -340,6 +370,52 @@ int main() {
             }
 
         }
+        for(auto &a_crab: crabs){
+            if(a_crab.isLive()){
+                sf::Sprite crab(spriteSheetTexture, sf::IntRect({137, 267}, {128,92}));
+                crab.setOrigin({64, 46});
+                crab.setPosition({a_crab.crabX(), a_crab.crabY()});
+                a_crab.update(static_cast<float>(wizardCenter.x),static_cast<float>(wizardCenter.y));
+                window.draw(crab);
+
+                // check for collisions with beam
+                auto box = crab.getGlobalBounds();
+                auto beamBox = beam.getGlobalBounds();
+                auto intersection_option = box.findIntersection(beamBox);
+                if(intersection_option){
+                    a_crab.end();
+                }
+
+                // auto bawks = sf::RectangleShape();
+                // bawks.setSize(box.size);
+                // bawks.setPosition(box.position);
+                // bawks.setFillColor(sf::Color::Transparent);
+                // bawks.setOutlineColor(sf::Color::Red);
+                // bawks.setOutlineThickness(3.f);
+                // window.draw(bawks);
+
+                // auto wizbawks = sf::RectangleShape();
+                // wizbawks.setSize(wizardBox.size);
+                // wizbawks.setPosition(wizardBox.position);
+                // wizbawks.setFillColor(sf::Color::Transparent);
+                // wizbawks.setOutlineColor(sf::Color::Blue);
+                // wizbawks.setOutlineThickness(3.f);
+                // window.draw(wizbawks);
+
+                auto wizardCollide = box.findIntersection(wizardBox);
+                if(wizardCollide){
+                    text.setString("OUCH!!!");
+                    text.setFillColor(sf::Color::Red);
+                    text.setCharacterSize(50);
+                    text.setPosition({static_cast<float>(screenWidth)/2, static_cast<float>(screenWidth)/2});
+                }
+            }
+        }
+        
+        // TODO figure out collisions
+
+
+        // crab.setTextureRect(sf::IntRect{{static_cast<int>(mousePosition.x), static_cast<int>(mousePosition.y)}, {128, 50}});
 
         window.display();
     }
