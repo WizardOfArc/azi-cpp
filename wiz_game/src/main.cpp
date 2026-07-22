@@ -174,8 +174,6 @@ int main() {
 
     auto wizardXpos = screenWidth / 2;
     auto wizardYpos = screenHeight - 200; 
-    int mousePositionX;
-    int mousePositionY;
     float wizCenterX;
     float wizCenterY;
     sf::Vector2i wizardCenter;
@@ -216,7 +214,7 @@ int main() {
         wizardCenter.y = static_cast<int>(wizCenterY);
         auto wizardWidth = wizardBox.size.x;
         auto wizardHeight = wizardBox.size.y;
-        if(static_cast<float>(mousePositionX) >= wizCenterX){
+        if(mousePosition.x >= wizCenterX){
             wizState.setDirection(WizardDirection::RIGHT);
         } else {
             wizState.setDirection(WizardDirection::LEFT);
@@ -287,8 +285,6 @@ int main() {
                        // do nothing
                 }
             } else if (const auto *mouseMoved = event->getIf<sf::Event::MouseMoved>()) {
-                mousePositionX = mouseMoved->position.x;
-                mousePositionY = mouseMoved->position.y;
                 mousePosition.x = static_cast<float>(mouseMoved->position.x);
                 mousePosition.y = static_cast<float>(mouseMoved->position.y);
             } else if (const auto *mouseButtonClicked = event->getIf<sf::Event::MouseButtonPressed>()) {
@@ -307,9 +303,6 @@ int main() {
         removeDeadCrabs(crabs);
         window.clear(sf::Color::Black);
         window.draw(background);
-        text.setString(std::format("mouse: ({},{})", mousePositionX, mousePositionY));
-        text.setCharacterSize(20);
-        text.setFillColor(sf::Color(255,0,255));
         window.draw(text);
         wizard.setPosition({static_cast<float>(wizardXpos), static_cast<float>(wizardYpos)});
         if(wizState.getDirection() == WizardDirection::LEFT){
@@ -382,25 +375,9 @@ int main() {
                 auto box = crab.getGlobalBounds();
                 auto beamBox = beam.getGlobalBounds();
                 auto intersection_option = box.findIntersection(beamBox);
-                if(intersection_option){
+                if(intersection_option && charger.chargeLevel() > 0){
                     a_crab.end();
                 }
-
-                // auto bawks = sf::RectangleShape();
-                // bawks.setSize(box.size);
-                // bawks.setPosition(box.position);
-                // bawks.setFillColor(sf::Color::Transparent);
-                // bawks.setOutlineColor(sf::Color::Red);
-                // bawks.setOutlineThickness(3.f);
-                // window.draw(bawks);
-
-                // auto wizbawks = sf::RectangleShape();
-                // wizbawks.setSize(wizardBox.size);
-                // wizbawks.setPosition(wizardBox.position);
-                // wizbawks.setFillColor(sf::Color::Transparent);
-                // wizbawks.setOutlineColor(sf::Color::Blue);
-                // wizbawks.setOutlineThickness(3.f);
-                // window.draw(wizbawks);
 
                 auto wizardCollide = box.findIntersection(wizardBox);
                 if(wizardCollide){
@@ -409,6 +386,7 @@ int main() {
                     text.setCharacterSize(50);
                     text.setPosition({static_cast<float>(screenWidth)/2, static_cast<float>(screenWidth)/2});
                 }
+
             }
         }
         
