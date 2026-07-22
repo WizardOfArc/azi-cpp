@@ -2,7 +2,6 @@
 
 #include <chrono>
 
-#include <print>
 
 const float LIFETIME = 2000;
 
@@ -36,17 +35,17 @@ class Blast {
            m_v_x = -(m_v_x);
        }
 
-       void bounceY(float y){
+       void bounceY(float y, float dampen){
            m_pos_y = y;
            m_initial_pos_y = y;
-           m_v_y = -(m_v_y);
+           m_v_y = -(dampen * m_v_y);
        }
 
        float getY(){
            return m_pos_y;
        }
 
-       void update(){
+       void update(float gravity){
            auto now = std::chrono::system_clock::now();
            auto age_dur = std::chrono::duration_cast<std::chrono::milliseconds>(now - m_birth_time);
            float age = static_cast<float>(age_dur.count());
@@ -56,6 +55,7 @@ class Blast {
            float time_since_update = static_cast<float>(since_dur.count());
            m_pos_x += time_since_update*m_v_x;
            m_pos_y += time_since_update*m_v_y;
+           m_v_y += time_since_update*gravity; // remeber 0 is up
            m_update_time = now;
            if(age > LIFETIME){
               m_live = false;

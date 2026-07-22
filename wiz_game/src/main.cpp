@@ -2,11 +2,13 @@
 #include "SFML/Audio/SoundBuffer.hpp"
 #include "SFML/Graphics/CircleShape.hpp"
 #include "SFML/Graphics/Color.hpp"
+#include "SFML/Graphics/ConvexShape.hpp"
 #include "SFML/Graphics/Rect.hpp"
 #include "SFML/Graphics/RectangleShape.hpp"
 #include "SFML/Graphics/RenderWindow.hpp"
 #include "SFML/Graphics/Sprite.hpp"
 #include "SFML/Graphics/Texture.hpp"
+#include "SFML/System/Angle.hpp"
 #include "SFML/System/Vector2.hpp"
 #include "SFML/Window/Event.hpp"
 #include "SFML/Window/Keyboard.hpp"
@@ -17,9 +19,11 @@
 
 #include "WizardState.hpp"
 #include "Blast.hpp"
+#include "Ray.hpp"
+#include "Charger.hpp"
 
 #include <cmath>
-#include <print>
+#include <cstddef>
 
 int Blast::count = 0;
 
@@ -51,14 +55,34 @@ sf::Color blastColor(Blast &blast){
     return color;
 }
 
+sf::Color chargeOrbColor(float charge){
+    auto capped = charge > 100.f ? 100.f : charge;
+    auto normalized = static_cast<size_t>(capped / 5.f);
+    return ageColorPallette[20 - normalized];
+}
+
 float blastRadius(Blast &blast){
     return static_cast<float>(20 - blast.getLifePhase());
 }
+
+
+struct BeamDimensions {
+    float magnitude;
+    sf::Angle angle;
+};
 
 struct UnitVector {
     float x;
     float y;
 };
+
+void normalizeVect(sf::Vector2f posA, sf::Vector2f posB, BeamDimensions &dimensions){
+    auto dx = posB.x - posA.x;
+    auto dy = posB.y - posA.y;
+    dimensions.magnitude = sqrt(dx*dx+dy*dy);
+    auto angle = atan2f(dy, dx); 
+    dimensions.angle = sf::radians(angle);
+}
 
 UnitVector normalize(float x1, float y1, float x2, float y2){
     auto dx = x2 - x1;
@@ -114,7 +138,7 @@ int main() {
 
     sf::Music music("WizGame.wav");
     music.setLooping(true);
-    music.setVolume(30.f);
+    music.setVolume(100.f);
     music.play();
     // -- end sounds and music
 
@@ -126,18 +150,30 @@ int main() {
     float wizCenterY;
     sf::Vector2i wizardCenter;
     sf::CircleShape glow;
-    glow.setFillColor(sf::Color(255,78,255));
-    glow.setRadius(20);
-    glow.setOrigin({20.f,20.f});
 
-    float scepterX;
-    float scepterY;
+    sf::Vector2f scepterCenter;
+    sf::Vector2f mousePosition;
+
+    // float scepterX;
+    // float scepterY;
     std::vector<Blast> blasts;
 
-    bool hasGlow;
+    Charger charger;
     WizardState wizState;
 
-    float speed = 4.f;
+    
+    BeamDimensions bDim;
+    Ray ray;
+    sf::ConvexShape beam(4);
+    beam.setOrigin({-20.f, 0.f});
+    beam.setPoint(0, {-20.f, 0.f});
+    beam.setPoint(1, {0.f, -20.f});
+    beam.setPoint(2, {20.f, 0.f});
+    beam.setPoint(3, {0.f, 20.f});
+
+    float gravity = 0.1f;
+    float dampening = 0.7f;
+    float speed = 5.f;
 
     while (window.isOpen()){
         int orbVerticalOffset = 45;
@@ -153,6 +189,8 @@ int main() {
         } else {
             wizState.setDirection(WizardDirection::LEFT);
         }
+        normalizeVect(scepterCenter, mousePosition, bDim);
+
         while (const std::optional event = window.pollEvent()) {
             if(event->is<sf::Event::Closed>()){
                 window.close();
@@ -167,7 +205,7 @@ int main() {
                        break;
                     case sf::Keyboard::Scancode::Space:
                        // add glow
-                       hasGlow = true;
+                       charger.buildCharge();
                        break;
                     case sf::Keyboard::Scancode::Right:
                        if(wizardBox.position.x + wizardBox.size.x <= screenWidth - 5){
@@ -198,12 +236,14 @@ int main() {
                 }
             } else if (const auto *keyReleased = event->getIf<sf::Event::KeyReleased>()){
                 auto scancode = keyReleased->scancode;
-                auto vector = normalize(scepterX, scepterY, static_cast<float>(mousePositionX), static_cast<float>(mousePositionY));
+                auto x_dimension = bDim.magnitude * charger.chargeLevelPercent();
                 switch (scancode){
                     case sf::Keyboard::Scancode::Space:
-                       hasGlow = false;
-                       blastSound.play();
-                       blasts.push_back(Blast{scepterX, scepterY, vector.x*speed, vector.y*speed});
+                       // TODO: play zzap! sound if ray not active yet
+                       beam.setPoint(2, {x_dimension, 0.f});
+                       beam.setRotation(bDim.angle);
+                       ray.setTTL(500);
+                       beam.setFillColor(chargeOrbColor(charger.chargeLevel()));
                        break;
                     default: 
                        // do nothing
@@ -211,11 +251,14 @@ int main() {
             } else if (const auto *mouseMoved = event->getIf<sf::Event::MouseMoved>()) {
                 mousePositionX = mouseMoved->position.x;
                 mousePositionY = mouseMoved->position.y;
+                mousePosition.x = static_cast<float>(mouseMoved->position.x);
+                mousePosition.y = static_cast<float>(mouseMoved->position.y);
             } else if (const auto *mouseButtonClicked = event->getIf<sf::Event::MouseButtonPressed>()) {
                 [[maybe_unused]] auto mbc = mouseButtonClicked;
-                auto vector = normalize(scepterX, scepterY, static_cast<float>(mousePositionX), static_cast<float>(mousePositionY));
+                auto tapPosition = mbc->position;
+                auto vector = normalize(scepterCenter.x, scepterCenter.y, static_cast<float>(tapPosition.x), static_cast<float>(tapPosition.y));
                 blastSound.play();
-                blasts.push_back(Blast{scepterX, scepterY, vector.x*speed, vector.y*speed});
+                blasts.push_back(Blast{scepterCenter.x, scepterCenter.y, vector.x*speed, vector.y*speed});
             }
         }
 
@@ -230,37 +273,48 @@ int main() {
         if(wizState.getDirection() == WizardDirection::LEFT){
             // flip to reverse
             wizard.setTextureRect(sf::IntRect({static_cast<int>(wizardWidth), 0}, {static_cast<int>(-wizardWidth), static_cast<int>(wizardHeight)}));
-            scepterX = static_cast<float>(wizardCenter.x) - 55;
-            scepterY = static_cast<float>(wizardCenter.y - orbVerticalOffset);
+            scepterCenter.x = static_cast<float>(wizardCenter.x) - 55;
+            scepterCenter.y = static_cast<float>(wizardCenter.y - orbVerticalOffset);
         } else {
             wizard.setTextureRect(sf::IntRect({0, 0}, {static_cast<int>(wizardWidth), static_cast<int>(wizardHeight)}));
-            scepterX = static_cast<float>(wizardCenter.x) + 55; 
-            scepterY = static_cast<float>(wizardCenter.y - orbVerticalOffset);
+            scepterCenter.x = static_cast<float>(wizardCenter.x) + 55; 
+            scepterCenter.y = static_cast<float>(wizardCenter.y - orbVerticalOffset);
         }
-        glow.setPosition({scepterX, scepterY});
-        if(hasGlow){
+
+        glow.setPosition(scepterCenter);
+        if(charger.isCharging()){
+            glow.setFillColor(chargeOrbColor(charger.chargeLevel()));
+            glow.setRadius(charger.chargeLevel() / 5);
+            glow.setOrigin({charger.chargeLevel() / 5, charger.chargeLevel() / 5});
             window.draw(glow);
         }
         window.draw(wizard);
+       
+        beam.setPosition(scepterCenter);
+        beam.setFillColor(chargeOrbColor(charger.chargeLevel()));
+        if(ray.live()){
+            window.draw(beam);
+            ray.update();
+            if(!ray.live()){
+                charger.discharge();
+            }
+        }
         for(auto &blast : blasts){
             // auto orb = blastOrbs[blast.getIdx()];
             auto bX = blast.getX();
             auto bY = blast.getY();
             if(blast.isLive() && bX < 0.f){
-                blast.bounceX(0.f);
-                bounceSound.play();
+                blast.end();
             }
             if(blast.isLive() && bX > static_cast<float>(screenWidth)){
-                blast.bounceX(screenWidth);
-                bounceSound.play();
+                blast.end();
             }
             if(blast.isLive() && bY > static_cast<float>(screenHeight)){
-                blast.bounceY(screenHeight);
+                blast.bounceY(screenHeight, dampening);
                 bounceSound.play();
             }
             if(blast.isLive() && bY < 0.f){
-                blast.bounceY(0.f);
-                bounceSound.play();
+                blast.end();
             }
             if(blast.isLive()){
                 auto brad = blastRadius(blast);
@@ -268,7 +322,7 @@ int main() {
                 orb.setOrigin({brad, brad});
                 orb.setFillColor(blastColor(blast));
                 orb.setPosition({bX, bY});
-                blast.update();
+                blast.update(gravity);
                 window.draw(orb);
             }
 
