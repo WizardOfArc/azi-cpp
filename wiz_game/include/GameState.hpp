@@ -5,6 +5,7 @@
 #include "Charger.hpp"
 #include "Crab.hpp"
 #include "Blast.hpp"
+#include "Ray.hpp"
 #include "SFML/System/Vector2.hpp"
 #include "WizardState.hpp"
 
@@ -158,6 +159,30 @@ class GameState {
             return m_bDim.magnitude * m_charger.chargeLevelPercent();
         }
 
+        void startBeam(){
+            m_beam.setTTL(500);
+        }
+
+        bool isBeamLive(){
+            return m_beam.live();
+        }
+
+        void updateBeam(){
+            m_beam.update();
+        }
+
+        void turnWizardLeft(){
+            m_wizard.setDirection(WizardDirection::LEFT);
+        }
+
+        void turnWizardRight(){
+            m_wizard.setDirection(WizardDirection::RIGHT);
+        }
+
+        bool wizardFacingLeft(){
+            return m_wizard.getDirection() == WizardDirection::LEFT;
+        }
+
     private:
        bool m_playing;
        int m_level;
@@ -172,5 +197,6 @@ class GameState {
        float m_gravity;
        float m_dampening;
        BeamDimensions m_bDim;
+       Ray m_beam;
 
 };

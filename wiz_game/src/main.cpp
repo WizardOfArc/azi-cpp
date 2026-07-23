@@ -22,6 +22,8 @@
 #include "Ray.hpp"
 #include "Charger.hpp"
 #include "Crab.hpp"
+#include "WizgameColors.hpp"
+#include "GameState.hpp"
 
 #include <cmath>
 #include <cstddef>
@@ -31,105 +33,25 @@
 int Blast::count = 0;
 int Crab::crabs_created = 0;
 
-const sf::Color ageColorPallette[] = {
-    sf::Color(255,255,255),
-    sf::Color(255,225,255),
-    sf::Color(255,195,255),
-    sf::Color(255,165,255),
-    sf::Color(255,135,255),
-    sf::Color(255,105,255),
-    sf::Color(255,75,255),
-    sf::Color(255,45,255),
-    sf::Color(255,15,255),
-    sf::Color(255,0,255),
-    sf::Color(255,0,225),
-    sf::Color(255,0,195),
-    sf::Color(255,0,165),
-    sf::Color(255,0,135),
-    sf::Color(255,0,105),
-    sf::Color(255,0,75),
-    sf::Color(255,0,45),
-    sf::Color(255,0,15),
-    sf::Color(255,0,0),
-    sf::Color(255,0,0),
-};
-
 sf::Color blastColor(Blast &blast){
-    auto color = ageColorPallette[blast.getLifePhase()];
+    auto phase = blast.getLifePhase();
+    auto color = wizgame::ageColor(phase);
     return color;
 }
 
-sf::Color chargeOrbColor(float charge){
-    auto capped = charge > 100.f ? 100.f : charge;
-    auto normalized = static_cast<size_t>(capped / 5.f);
-    return ageColorPallette[20 - normalized];
-}
 
 float blastRadius(Blast &blast){
     return static_cast<float>(20 - blast.getLifePhase());
 }
 
 
-struct BeamDimensions {
-    float magnitude;
-    sf::Angle angle;
-};
-
-struct UnitVector {
-    float x;
-    float y;
-};
-
-void normalizeVect(sf::Vector2f posA, sf::Vector2f posB, BeamDimensions &dimensions){
-    auto dx = posB.x - posA.x;
-    auto dy = posB.y - posA.y;
-    dimensions.magnitude = sqrt(dx*dx+dy*dy);
-    auto angle = atan2f(dy, dx); 
-    dimensions.angle = sf::radians(angle);
-}
-
-UnitVector normalize(float x1, float y1, float x2, float y2){
-    auto dx = x2 - x1;
-    auto dy = y2 - y1;
-    auto mag = sqrt(dx*dx + dy*dy);
-    return UnitVector{dx/mag, dy/mag};
-};
-
-void removeDead(std::vector<Blast> &toUpdate){
-    std::vector<Blast> toKeep;
-    for(auto &blast : toUpdate){
-        if(blast.isLive()){
-            toKeep.push_back(blast);
-        }
-    }
-    toUpdate.clear();
-    toUpdate = toKeep;
-}
-
-void removeDeadCrabs(std::vector<Crab> &toUpdate){
-    std::vector<Crab> toKeep;
-    for(auto &crab: toUpdate){
-        if(crab.isLive()){
-            toKeep.push_back(crab);
-        }
-    }
-    toUpdate.clear();
-    toUpdate = toKeep;
-}
-
-void spawnCrabs(int number, std::vector<Crab> &crabs, int scw, int sch){
-     for(int i=0; i < number; i++){
-        auto rndX = static_cast<float>(rand() % scw);
-        auto rndY = static_cast<float>(rand() % sch);
-        crabs.push_back(Crab{rndX, rndY, 30});
-     }
-}
 
 int main() {
     // TODO: add game state
     const sf::String title = "The Wizard Game";
     const uint32_t screenWidth = 1600;
     const uint32_t screenHeight = 1000;
+    GameState state{screenWidth, screenHeight, 5.f };
     sf::RenderWindow window(sf::VideoMode({screenWidth, screenHeight}), title);
     window.setFramerateLimit(60);
 
@@ -188,12 +110,8 @@ int main() {
 
     std::vector<Crab> crabs;
 
-    Charger charger;
-    WizardState wizState;
 
     
-    BeamDimensions bDim;
-    Ray ray;
     sf::ConvexShape beam(4);
     beam.setOrigin({-20.f, 0.f});
     beam.setPoint(0, {-20.f, 0.f});
@@ -201,11 +119,6 @@ int main() {
     beam.setPoint(2, {20.f, 0.f});
     beam.setPoint(3, {0.f, 20.f});
 
-    float gravity = 0.1f;
-    float dampening = 0.7f;
-    float speed = 5.f;
-
-    bool timeToSpawn = true;
 
     while (window.isOpen()){
         int orbVerticalOffset = 45;
@@ -219,11 +132,11 @@ int main() {
 
 
         if(mousePosition.x >= wizCenterX){
-            wizState.setDirection(WizardDirection::RIGHT);
+            state.turnWizardRight();
         } else {
-            wizState.setDirection(WizardDirection::LEFT);
+            state.turnWizardLeft();
         }
-        normalizeVect(scepterCenter, mousePosition, bDim);
+        state.updateBeam(scepterCenter, mousePosition);
 
         while (const std::optional event = window.pollEvent()) {
             if(event->is<sf::Event::Closed>()){
@@ -238,7 +151,7 @@ int main() {
                        window.close();
                        break;
                     case sf::Keyboard::Scancode::Space:
-                       charger.buildCharge();
+                       state.chargeUp();
                        if(not chargeSound.isLooping()){
                           chargeSound.setLooping(true);
                           chargeSound.play();
@@ -273,14 +186,13 @@ int main() {
                 }
             } else if (const auto *keyReleased = event->getIf<sf::Event::KeyReleased>()){
                 auto scancode = keyReleased->scancode;
-                auto x_dimension = bDim.magnitude * charger.chargeLevelPercent();
                 switch (scancode){
                     case sf::Keyboard::Scancode::Space:
                        // TODO: play zzap! sound if ray not active yet
-                       beam.setPoint(2, {x_dimension, 0.f});
-                       beam.setRotation(bDim.angle);
-                       ray.setTTL(500);
-                       beam.setFillColor(chargeOrbColor(charger.chargeLevel()));
+                       beam.setPoint(2, {state.getBeamXDimension(), 0.f});
+                       beam.setRotation(state.getBeamAngle());
+                       state.startBeam();
+                       beam.setFillColor(wizgame::chargeColor(state.getChargeLevel()));
                        chargeSound.stop();
                        chargeSound.setLooping(false);
                        zapSound.play();
@@ -294,22 +206,17 @@ int main() {
             } else if (const auto *mouseButtonClicked = event->getIf<sf::Event::MouseButtonPressed>()) {
                 [[maybe_unused]] auto mbc = mouseButtonClicked;
                 auto tapPosition = mbc->position;
-                auto vector = normalize(scepterCenter.x, scepterCenter.y, static_cast<float>(tapPosition.x), static_cast<float>(tapPosition.y));
                 blastSound.play();
-                blasts.push_back(Blast{scepterCenter.x, scepterCenter.y, vector.x*speed, vector.y*speed});
+                state.spawnBlast(scepterCenter, tapPosition);
             }
         }
-        if(timeToSpawn){
-            spawnCrabs(3, crabs, screenWidth, screenHeight);
-            timeToSpawn = false;
-        }
-        removeDead(blasts);
-        removeDeadCrabs(crabs);
+        state.prune();
+        state.spawnCrabs();
         window.clear(sf::Color::Black);
         window.draw(background);
         window.draw(text);
         wizard.setPosition({static_cast<float>(wizardXpos), static_cast<float>(wizardYpos)});
-        if(wizState.getDirection() == WizardDirection::LEFT){
+        if(state.wizardFacingLeft()){
             // flip to reverse
             wizard.setTextureRect(sf::IntRect({static_cast<int>(wizardWidth), 0}, {static_cast<int>(-wizardWidth), static_cast<int>(wizardHeight)}));
             scepterCenter.x = static_cast<float>(wizardCenter.x) - 55;
@@ -321,9 +228,9 @@ int main() {
         }
 
         glow.setPosition(scepterCenter);
-        if(charger.isCharging()){
-            auto chargeLevel = charger.chargeLevel();
-            glow.setFillColor(chargeOrbColor(chargeLevel));
+        if(state.isCharging()){
+            auto chargeLevel = state.getChargeLevel();
+            glow.setFillColor(wizgame::chargeColor(chargeLevel));
             glow.setRadius(chargeLevel / 5);
             glow.setOrigin({chargeLevel / 5, chargeLevel / 5});
             window.draw(glow);
@@ -331,12 +238,13 @@ int main() {
         window.draw(wizard);
        
         beam.setPosition(scepterCenter);
-        beam.setFillColor(chargeOrbColor(charger.chargeLevel()));
-        if(ray.live()){
+        auto chargeColor = wizgame::chargeColor(state.getChargeLevel());
+        beam.setFillColor(chargeColor);
+        if(state.isBeamLive()){
             window.draw(beam);
-            ray.update();
-            if(!ray.live()){
-                charger.discharge();
+            state.updateBeam();
+            if(!state.isBeamLive()){
+                state.discharge();
             }
         }
         for(auto &blast : blasts){
@@ -350,7 +258,7 @@ int main() {
                 blast.end();
             }
             if(blast.isLive() && bY > static_cast<float>(screenHeight)){
-                blast.bounceY(screenHeight, dampening);
+                blast.bounceY(screenHeight, state.getDampening());
                 bounceSound.play();
             }
             if(blast.isLive() && bY < 0.f){
@@ -362,7 +270,7 @@ int main() {
                 orb.setOrigin({brad, brad});
                 orb.setFillColor(blastColor(blast));
                 orb.setPosition({bX, bY});
-                blast.update(gravity);
+                blast.update(state.getGravity());
                 window.draw(orb);
             }
 
@@ -379,7 +287,7 @@ int main() {
                 auto box = crab.getGlobalBounds();
                 auto beamBox = beam.getGlobalBounds();
                 auto intersection_option = box.findIntersection(beamBox);
-                if(intersection_option && charger.chargeLevel() > 0){
+                if(intersection_option && state.getChargeLevel() > 0){
                     a_crab.end();
                 }
 
