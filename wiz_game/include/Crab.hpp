@@ -16,6 +16,7 @@ class Crab {
             crabs_created += 1;
             m_id = crabs_created;
             m_leap_factor = 30.f;
+            m_can_attack = true;
        }
 
        explicit Crab(){
@@ -32,7 +33,10 @@ class Crab {
                 } else {
                     m_pos_y += (m_leap_factor*deltaY/abs(deltaY));
                 }
+                m_can_attack = true;
                 m_updateTick = 0;
+           } else {
+                m_can_attack = false;
            }
        }
 
@@ -43,6 +47,10 @@ class Crab {
 
        bool isLive(){
         return m_live;
+       }
+
+       bool can_attack(){
+          return m_can_attack;
        }
 
        float crabX(){
@@ -61,5 +69,6 @@ class Crab {
        int m_updateTick;
        float m_leap_factor;
        int m_id;
+       bool m_can_attack;
 
 };

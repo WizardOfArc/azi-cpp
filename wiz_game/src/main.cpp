@@ -10,6 +10,7 @@
 #include "SFML/Graphics/Texture.hpp"
 #include "SFML/System/Angle.hpp"
 #include "SFML/System/Vector2.hpp"
+#include "SFML/Window/ContextSettings.hpp"
 #include "SFML/Window/Event.hpp"
 #include "SFML/Window/Keyboard.hpp"
 #include "SFML/Window/Mouse.hpp"
@@ -64,6 +65,12 @@ int main() {
     sf::Text text(font);
     text.setOrigin({300, 50});
 
+    sf::Text scoreText(font);
+    scoreText.setPosition({0.f,0.f});
+    scoreText.setCharacterSize(70);
+    scoreText.setFillColor(sf::Color::White);
+    scoreText.setStyle(sf::Text::Bold);
+
     sf::Texture wizardTexture("wizard_sprite.png");
     sf::Sprite wizard(wizardTexture);
 
@@ -106,10 +113,10 @@ int main() {
     sf::Vector2f scepterCenter;
     sf::Vector2f mousePosition;
 
-    std::vector<Blast> blasts;
-
-    std::vector<Crab> crabs;
-
+    sf::RectangleShape healthBar;
+    healthBar.setPosition({0.f, 150.f});
+    healthBar.setOutlineColor(sf::Color::Black);
+    healthBar.setOutlineThickness(4.f);
 
     
     sf::ConvexShape beam(4);
@@ -121,6 +128,13 @@ int main() {
 
 
     while (window.isOpen()){
+        state.update(); 
+        healthBar.setSize(
+            {static_cast<float>(screenWidth) /400 * static_cast<float>(state.getWizardHealth()),
+                 20.f}
+                );
+        healthBar.setFillColor(wizgame::chargeColor(static_cast<float>(state.getWizardHealth())));
+        scoreText.setString(std::format("Crabs Zapped: {}, level:{}", state.getScore(), state.getLevel()));
         int orbVerticalOffset = 45;
         auto wizardBox = wizard.getGlobalBounds();
         wizCenterX = (static_cast<float>(wizardBox.size.x) / 2) + wizardBox.position.x;
@@ -211,110 +225,119 @@ int main() {
             }
         }
         state.prune();
-        state.spawnCrabs();
         window.clear(sf::Color::Black);
-        window.draw(background);
-        window.draw(text);
-        wizard.setPosition({static_cast<float>(wizardXpos), static_cast<float>(wizardYpos)});
-        if(state.wizardFacingLeft()){
-            // flip to reverse
-            wizard.setTextureRect(sf::IntRect({static_cast<int>(wizardWidth), 0}, {static_cast<int>(-wizardWidth), static_cast<int>(wizardHeight)}));
-            scepterCenter.x = static_cast<float>(wizardCenter.x) - 55;
-            scepterCenter.y = static_cast<float>(wizardCenter.y - orbVerticalOffset);
-        } else {
-            wizard.setTextureRect(sf::IntRect({0, 0}, {static_cast<int>(wizardWidth), static_cast<int>(wizardHeight)}));
-            scepterCenter.x = static_cast<float>(wizardCenter.x) + 55; 
-            scepterCenter.y = static_cast<float>(wizardCenter.y - orbVerticalOffset);
-        }
-
-        glow.setPosition(scepterCenter);
-        if(state.isCharging()){
-            auto chargeLevel = state.getChargeLevel();
-            glow.setFillColor(wizgame::chargeColor(chargeLevel));
-            glow.setRadius(chargeLevel / 5);
-            glow.setOrigin({chargeLevel / 5, chargeLevel / 5});
-            window.draw(glow);
-        }
-        window.draw(wizard);
-       
-        beam.setPosition(scepterCenter);
-        auto chargeColor = wizgame::chargeColor(state.getChargeLevel());
-        beam.setFillColor(chargeColor);
-        if(state.isBeamLive()){
-            window.draw(beam);
-            state.updateBeam();
-            if(!state.isBeamLive()){
-                state.discharge();
-            }
-        }
-        for(auto &blast : blasts){
-            // auto orb = blastOrbs[blast.getIdx()];
-            auto bX = blast.getX();
-            auto bY = blast.getY();
-            if(blast.isLive() && bX < 0.f){
-                blast.end();
-            }
-            if(blast.isLive() && bX > static_cast<float>(screenWidth)){
-                blast.end();
-            }
-            if(blast.isLive() && bY > static_cast<float>(screenHeight)){
-                blast.bounceY(screenHeight, state.getDampening());
-                bounceSound.play();
-            }
-            if(blast.isLive() && bY < 0.f){
-                blast.end();
-            }
-            if(blast.isLive()){
-                auto brad = blastRadius(blast);
-                sf::CircleShape orb{brad};
-                orb.setOrigin({brad, brad});
-                orb.setFillColor(blastColor(blast));
-                orb.setPosition({bX, bY});
-                blast.update(state.getGravity());
-                window.draw(orb);
+        if(state.isRunning()){
+            state.spawnCrabs();
+            window.draw(background);
+            window.draw(text);
+            wizard.setPosition({static_cast<float>(wizardXpos), static_cast<float>(wizardYpos)});
+            if(state.wizardFacingLeft()){
+                // flip to reverse
+                wizard.setTextureRect(sf::IntRect({static_cast<int>(wizardWidth), 0}, {static_cast<int>(-wizardWidth), static_cast<int>(wizardHeight)}));
+                scepterCenter.x = static_cast<float>(wizardCenter.x) - 55;
+                scepterCenter.y = static_cast<float>(wizardCenter.y - orbVerticalOffset);
+            } else {
+                wizard.setTextureRect(sf::IntRect({0, 0}, {static_cast<int>(wizardWidth), static_cast<int>(wizardHeight)}));
+                scepterCenter.x = static_cast<float>(wizardCenter.x) + 55; 
+                scepterCenter.y = static_cast<float>(wizardCenter.y - orbVerticalOffset);
             }
 
-        }
-        for(auto &a_crab: crabs){
-            if(a_crab.isLive()){
-                sf::Sprite crab(spriteSheetTexture, sf::IntRect({137, 267}, {128,92}));
-                crab.setOrigin({64, 46});
-                crab.setPosition({a_crab.crabX(), a_crab.crabY()});
-                a_crab.update(static_cast<float>(wizardCenter.x),static_cast<float>(wizardCenter.y));
-                window.draw(crab);
-
-                // check for collisions with beam
-                auto box = crab.getGlobalBounds();
-                auto beamBox = beam.getGlobalBounds();
-                auto intersection_option = box.findIntersection(beamBox);
-                if(intersection_option && state.getChargeLevel() > 0){
-                    a_crab.end();
-                }
-
-                auto wizardCollide = box.findIntersection(wizardBox);
-                if(wizardCollide){
-                    text.setString("OUCH!!!");
-                    text.setFillColor(sf::Color::Red);
-                    text.setStyle(
-                        sf::Text::Bold |
-                        sf::Text::Underlined
-                    );
-                    text.setCharacterSize(150);
-                    text.setPosition({static_cast<float>(screenWidth)/2, static_cast<float>(screenHeight)/2});
-                }
-
-                for(auto &blast : blasts){
-                    auto bx = blast.getX();
-                    auto by = blast.getY();
-                    if(box.contains({bx, by})){
-                        a_crab.end();
-                        blast.end();
-                    }
-                }
-
+            glow.setPosition(scepterCenter);
+            if(state.isCharging()){
+                auto chargeLevel = state.getChargeLevel();
+                glow.setFillColor(wizgame::chargeColor(chargeLevel));
+                glow.setRadius(chargeLevel / 5);
+                glow.setOrigin({chargeLevel / 5, chargeLevel / 5});
+                window.draw(glow);
             }
-        }
+            window.draw(wizard);
         
+            beam.setPosition(scepterCenter);
+            auto chargeColor = wizgame::chargeColor(state.getChargeLevel());
+            beam.setFillColor(chargeColor);
+            if(state.isBeamLive()){
+                window.draw(beam);
+                state.updateBeam();
+                if(!state.isBeamLive()){
+                    state.discharge();
+                }
+            }
+            for(auto &blast : state.getBlasts()){
+                // auto orb = blastOrbs[blast.getIdx()];
+                auto bX = blast.getX();
+                auto bY = blast.getY();
+                if(blast.isLive() && bX < 0.f){
+                    blast.end();
+                }
+                if(blast.isLive() && bX > static_cast<float>(screenWidth)){
+                    blast.end();
+                }
+                if(blast.isLive() && bY > static_cast<float>(screenHeight)){
+                    blast.bounceY(screenHeight, state.getDampening());
+                    bounceSound.play();
+                }
+                if(blast.isLive() && bY < 0.f){
+                    blast.end();
+                }
+                if(blast.isLive()){
+                    auto brad = blastRadius(blast);
+                    sf::CircleShape orb{brad};
+                    orb.setOrigin({brad, brad});
+                    orb.setFillColor(blastColor(blast));
+                    orb.setPosition({bX, bY});
+                    blast.update(state.getGravity());
+                    window.draw(orb);
+                }
+
+            }
+            for(auto &a_crab: state.getCrabs()){
+                if(a_crab.isLive()){
+                    sf::Sprite crab(spriteSheetTexture, sf::IntRect({137, 267}, {128,92}));
+                    crab.setOrigin({64, 46});
+                    crab.setPosition({a_crab.crabX(), a_crab.crabY()});
+                    a_crab.update(static_cast<float>(wizardCenter.x),static_cast<float>(wizardCenter.y));
+                    window.draw(crab);
+
+                    // check for collisions with beam
+                    auto box = crab.getGlobalBounds();
+                    auto beamBox = beam.getGlobalBounds();
+                    auto intersection_option = box.findIntersection(beamBox);
+                    if(intersection_option && state.getChargeLevel() > 0){
+                        a_crab.end();
+                        state.incrementScore();
+                    }
+
+                    auto wizardCollide = box.findIntersection(wizardBox);
+                    if(wizardCollide){
+                        if(a_crab.can_attack())
+                        state.hurtWizard(2);
+                    }
+
+                    for(auto &blast : state.getBlasts()){
+                        auto bx = blast.getX();
+                        auto by = blast.getY();
+                        if(box.contains({bx, by})){
+                            a_crab.end();
+                            blast.end();
+                            state.incrementScore();
+                        }
+                    }
+
+                }
+            }
+            
+            window.draw(scoreText);
+            window.draw(healthBar);
+        } else {
+            sf::Text gameover(font);
+            gameover.setString("GAME OVER!");
+            gameover.setFillColor(sf::Color::Red);
+            gameover.setCharacterSize(150);
+            gameover.setStyle(sf::Text::Bold | sf::Text::Underlined);
+            gameover.setOrigin({400, 75});
+            gameover.setPosition({screenWidth/2, screenHeight/2});
+            window.draw(gameover);
+        }
         // TODO figure out collisions
 
 

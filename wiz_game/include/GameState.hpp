@@ -54,18 +54,33 @@ class GameState {
            m_level = 1;
            m_gravity = 0.1f;
            m_dampening = 0.7f;
+           m_score = 0;
+           m_score_at_level = 0;
         } 
 
         bool isRunning(){
             return m_playing;
         }
 
-        int level(){
-            return m_level;
-        }
-
         int getScore(){
             return m_score;
+        }
+
+        void incrementScore(){
+            m_score += 1;
+            m_score_at_level += 1;
+            if(m_score_at_level >= 10){
+                incrementLevel();
+                m_score_at_level = 0;
+            }
+        }
+
+        int getWizardHealth(){
+            return m_wizard.getHealth();
+        }
+
+        void hurtWizard(int hits){
+            m_wizard.takeDamage(hits);
         }
 
         void prune(){
@@ -116,7 +131,9 @@ class GameState {
         }
 
         void update(){
-
+             if(not m_wizard.isLive()){
+                m_playing = false;
+             }
         }
 
         float getGravity(){
@@ -183,6 +200,14 @@ class GameState {
             return m_wizard.getDirection() == WizardDirection::LEFT;
         }
 
+        std::vector<Crab> &getCrabs(){
+            return m_crabs; // will this return a reference or a copy?
+        }
+
+        std::vector<Blast> &getBlasts(){
+            return m_blasts;
+        }
+
     private:
        bool m_playing;
        int m_level;
@@ -198,5 +223,6 @@ class GameState {
        float m_dampening;
        BeamDimensions m_bDim;
        Ray m_beam;
+       int m_score_at_level;
 
 };
